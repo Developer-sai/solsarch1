@@ -41,12 +41,22 @@ export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramPro
         containerRef.current.innerHTML = '';
         
         try {
-          // Clean up the diagram string
-          const cleanDiagram = diagram
+          // Clean up the diagram string - handle various escape patterns
+          let cleanDiagram = diagram
+            .replace(/\\\\n/g, '\n')
             .replace(/\\n/g, '\n')
-            .replace(/\\\\/g, '\\');
+            .replace(/\\\\/g, '\\')
+            .replace(/\\"/g, '"')
+            .trim();
           
-          const { svg } = await mermaid.render(`mermaid-${variant}`, cleanDiagram);
+          // Ensure it starts with a valid graph declaration
+          if (!cleanDiagram.match(/^(graph|flowchart|sequenceDiagram|classDiagram)/)) {
+            cleanDiagram = 'graph TD\n' + cleanDiagram;
+          }
+          
+          // Generate unique ID to prevent conflicts
+          const id = `mermaid-${variant}-${Date.now()}`;
+          const { svg } = await mermaid.render(id, cleanDiagram);
           containerRef.current.innerHTML = svg;
           
           // Style the SVG
@@ -54,12 +64,14 @@ export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramPro
           if (svgElement) {
             svgElement.style.maxWidth = '100%';
             svgElement.style.height = 'auto';
+            svgElement.style.minHeight = '200px';
           }
         } catch (error) {
-          console.error('Mermaid rendering error:', error);
+          console.error('Mermaid rendering error:', error, 'Diagram:', diagram);
           containerRef.current.innerHTML = `
-            <div class="flex items-center justify-center h-48 text-muted-foreground">
-              <p>Diagram preview unavailable</p>
+            <div class="flex flex-col items-center justify-center h-48 text-muted-foreground gap-2">
+              <Network className="w-8 h-8 opacity-50" />
+              <p class="text-sm">Architecture diagram generation in progress...</p>
             </div>
           `;
         }
