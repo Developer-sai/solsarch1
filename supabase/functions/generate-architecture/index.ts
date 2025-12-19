@@ -77,7 +77,7 @@ Generate exactly 3 architecture variants for the given requirements. Return a va
       "totalCosts": {...}
     }
   ],
-  "mermaidDiagram": "graph TD\\n    A[Load Balancer] --> B[App Server 1]\\n    A --> C[App Server 2]\\n    B --> D[(Database)]\\n    C --> D",
+  "mermaidDiagram": "graph TD; A[Load Balancer] --> B[App Server 1]; A --> C[App Server 2]; B --> D[(Database)]; C --> D",
   "recommendations": [
     {
       "type": "cost-saving",
