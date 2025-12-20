@@ -6,14 +6,17 @@ import { CostComparison } from '@/components/app/CostComparison';
 import { ArchitectureDiagram } from '@/components/app/ArchitectureDiagram';
 import { GPUDashboard } from '@/components/app/GPUDashboard';
 import { Recommendations } from '@/components/app/Recommendations';
+import { TradeOffSliders } from '@/components/app/TradeOffSliders';
+import { ExportButton } from '@/components/app/ExportButton';
 import { Requirements, ArchitectureResult } from '@/types/architecture';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
-type ViewMode = 'wizard' | 'results';
+type ViewMode = 'landing' | 'wizard' | 'results';
 
 const Index = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('wizard');
+  const [viewMode, setViewMode] = useState<ViewMode>('landing');
   const [isGenerating, setIsGenerating] = useState(false);
   const [requirements, setRequirements] = useState<Requirements | null>(null);
   const [result, setResult] = useState<ArchitectureResult | null>(null);
@@ -62,19 +65,39 @@ const Index = () => {
   };
 
   const handleReset = () => {
-    setViewMode('wizard');
+    setViewMode('landing');
     setResult(null);
     setRequirements(null);
   };
 
+  const handleStartDesign = () => {
+    setViewMode('wizard');
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader onReset={handleReset} hasResults={viewMode === 'results'} />
+      <AppHeader 
+        onReset={handleReset} 
+        hasResults={viewMode === 'results'}
+        showExport={viewMode === 'results' && result !== null && requirements !== null}
+        exportComponent={
+          result && requirements ? (
+            <ExportButton 
+              result={result} 
+              requirements={requirements} 
+              selectedVariant={selectedVariant} 
+            />
+          ) : undefined
+        }
+      />
       
       {isGenerating && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-card border border-border">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+          <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-card border border-border shadow-2xl">
+            <div className="relative">
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <Sparkles className="w-5 h-5 text-primary absolute -top-1 -right-1 animate-pulse" />
+            </div>
             <div className="text-center">
               <h3 className="text-lg font-semibold text-foreground">Generating Architecture</h3>
               <p className="text-muted-foreground">AI is designing your cloud infrastructure...</p>
@@ -83,12 +106,84 @@ const Index = () => {
         </div>
       )}
 
-      <main className="container mx-auto px-4 py-8">
-        {viewMode === 'wizard' && (
-          <RequirementsWizard onSubmit={handleGenerate} isLoading={isGenerating} />
-        )}
+      {/* Landing View */}
+      {viewMode === 'landing' && (
+        <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
+          {/* Background effects */}
+          <div className="absolute inset-0 bg-grid-pattern bg-grid opacity-5" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] animate-pulse-glow" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-info/20 rounded-full blur-[100px]" />
+          
+          <div className="container relative mx-auto px-6 pt-20 pb-20">
+            <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/80 border border-border/50 backdrop-blur-sm mb-8 animate-fade-in">
+                <Zap className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-muted-foreground">
+                  AI-Powered Solutions Architect
+                </span>
+              </div>
+              
+              {/* Headline */}
+              <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+                Design. Compare.{" "}
+                <span className="gradient-text">Optimize.</span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mb-10 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+                The AI Solutions Architect that designs production-ready cloud architectures with real-time pricing intelligence across AWS, Azure, GCP, and OCI.
+              </p>
+              
+              {/* CTA Button */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+                <Button onClick={handleStartDesign} variant="hero" size="xl" className="gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  Start Designing
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </div>
+              
+              {/* Feature cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+                <FeatureCard
+                  icon={<Cloud className="w-6 h-6" />}
+                  title="Multi-Cloud Architecture"
+                  description="Design for AWS, Azure, GCP, OCI with provider-specific optimizations"
+                />
+                <FeatureCard
+                  icon={<DollarSign className="w-6 h-6" />}
+                  title="Live Cost Intelligence"
+                  description="Real-time pricing comparison across all major cloud providers"
+                />
+                <FeatureCard
+                  icon={<Cpu className="w-6 h-6" />}
+                  title="GPU Price-Performance"
+                  description="Compare A100, H100, L40, T4 costs per TFLOP across providers"
+                />
+              </div>
 
-        {viewMode === 'results' && result && (
+              {/* Additional features */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-12 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+                <SmallFeature icon={<BarChart3 className="w-4 h-4" />} text="Cost Optimization" />
+                <SmallFeature icon={<Shield className="w-4 h-4" />} text="Security Best Practices" />
+                <SmallFeature icon={<Globe className="w-4 h-4" />} text="Multi-Region Support" />
+                <SmallFeature icon={<Zap className="w-4 h-4" />} text="Instant Generation" />
+              </div>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* Wizard View */}
+      {viewMode === 'wizard' && (
+        <main className="container mx-auto px-4 py-8">
+          <RequirementsWizard onSubmit={handleGenerate} isLoading={isGenerating} />
+        </main>
+      )}
+
+      {/* Results View */}
+      {viewMode === 'results' && result && (
+        <main className="container mx-auto px-4 py-8">
           <div className="space-y-8 animate-fade-in">
             <ArchitectureView 
               architectures={result.architectures}
@@ -106,14 +201,51 @@ const Index = () => {
               />
             </div>
 
-            <GPUDashboard />
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <GPUDashboard />
+              </div>
+              <TradeOffSliders />
+            </div>
 
             <Recommendations recommendations={result.recommendations} />
           </div>
-        )}
-      </main>
+        </main>
+      )}
     </div>
   );
 };
+
+function FeatureCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="group relative p-6 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/50 hover:bg-card/80 transition-all duration-300">
+      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="relative">
+        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/20 transition-colors">
+          {icon}
+        </div>
+        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function SmallFeature({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30 border border-border/30">
+      <div className="text-primary">{icon}</div>
+      <span className="text-sm text-muted-foreground">{text}</span>
+    </div>
+  );
+}
 
 export default Index;
