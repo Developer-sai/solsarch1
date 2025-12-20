@@ -77,7 +77,7 @@ Generate exactly 3 architecture variants for the given requirements. Return a va
       "totalCosts": {...}
     }
   ],
-  "mermaidDiagram": "graph TD; A[Load Balancer] --> B[App Server 1]; A --> C[App Server 2]; B --> D[(Database)]; C --> D",
+  "mermaidDiagram": "graph TD\\n    LB[Load Balancer] --> WS[Web Server]\\n    WS --> API[API Gateway]\\n    API --> APP[App Server]\\n    APP --> CACHE[(Redis)]\\n    APP --> DB[(Database)]\\n    APP --> QUEUE[Queue]\\n    QUEUE --> WORKER[Workers]\\n    CDN[CDN] --> LB",
   "recommendations": [
     {
       "type": "cost-saving",
@@ -88,6 +88,14 @@ Generate exactly 3 architecture variants for the given requirements. Return a va
     }
   ]
 }
+
+CRITICAL: For mermaidDiagram:
+- Use simple node IDs without special characters (letters and numbers only)
+- Use --> for arrows
+- Use [...] for rectangular nodes and [(...)] for database/cylinder nodes
+- Keep node labels short and simple (no special characters, no parentheses in labels)
+- Use \\n for newlines in the JSON string
+- Example: "graph TD\\n    A[Load Balancer] --> B[Server]\\n    B --> C[(Database)]"
 
 Be realistic with pricing based on current 2024 cloud pricing. Include GPU instances if the app type involves AI/ML.`;
 

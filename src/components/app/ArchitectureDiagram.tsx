@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Network, RefreshCw, Maximize2 } from 'lucide-react';
@@ -36,137 +36,164 @@ const DEFAULT_DIAGRAM = `graph TD
     WORKER --> STORAGE[(Object Storage)]
     CDN[CDN] --> LB`;
 
+// Initialize mermaid once at module level
+let mermaidInitialized = false;
+const initMermaid = () => {
+  if (mermaidInitialized) return;
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#6366f1',
+      primaryTextColor: '#ffffff',
+      primaryBorderColor: '#818cf8',
+      lineColor: '#a5b4fc',
+      secondaryColor: '#1e1b4b',
+      tertiaryColor: '#0f172a',
+      background: '#0f172a',
+      mainBkg: '#1e1b4b',
+      nodeBorder: '#818cf8',
+      clusterBkg: '#1e1b4b',
+      titleColor: '#ffffff',
+      edgeLabelBackground: '#1e1b4b',
+    },
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis',
+      padding: 20,
+    },
+    securityLevel: 'loose',
+  });
+  mermaidInitialized = true;
+};
+
+const cleanDiagramString = (diagramStr: string): string => {
+  if (!diagramStr || typeof diagramStr !== 'string') {
+    return DEFAULT_DIAGRAM;
+  }
+  
+  // Clean up the diagram string - handle various escape patterns
+  let cleaned = diagramStr
+    .replace(/\\\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\\\\/g, '\\')
+    .replace(/\\"/g, '"')
+    .replace(/\\t/g, '  ')
+    .trim();
+  
+  // Replace semicolons that are used as line separators with newlines
+  // But only if the line doesn't start with graph/flowchart declaration
+  if (cleaned.includes(';') && !cleaned.includes('\n')) {
+    cleaned = cleaned.replace(/;\s*/g, '\n    ');
+  }
+  
+  // Ensure it starts with a valid graph declaration
+  if (!cleaned.match(/^(graph|flowchart|sequenceDiagram|classDiagram)/i)) {
+    cleaned = 'graph TD\n    ' + cleaned;
+  }
+  
+  return cleaned;
+};
+
 export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const fullscreenContainerRef = useRef<HTMLDivElement>(null);
   const [isRendered, setIsRendered] = useState(false);
   const [renderError, setRenderError] = useState(false);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const [svgContent, setSvgContent] = useState<string | null>(null);
+  const renderAttemptRef = useRef(0);
 
-  const initMermaid = () => {
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: 'dark',
-      themeVariables: {
-        primaryColor: '#6366f1',
-        primaryTextColor: '#ffffff',
-        primaryBorderColor: '#818cf8',
-        lineColor: '#a5b4fc',
-        secondaryColor: '#1e1b4b',
-        tertiaryColor: '#0f172a',
-        background: '#0f172a',
-        mainBkg: '#1e1b4b',
-        nodeBorder: '#818cf8',
-        clusterBkg: '#1e1b4b',
-        titleColor: '#ffffff',
-        edgeLabelBackground: '#1e1b4b',
-      },
-      flowchart: {
-        useMaxWidth: true,
-        htmlLabels: true,
-        curve: 'basis',
-        padding: 20,
-      },
-      securityLevel: 'loose',
-    });
-  };
-
-  const cleanDiagramString = (diagramStr: string): string => {
-    // Clean up the diagram string - handle various escape patterns
-    let cleaned = diagramStr
-      .replace(/\\\\n/g, '\n')
-      .replace(/\\n/g, '\n')
-      .replace(/\\\\/g, '\\')
-      .replace(/\\"/g, '"')
-      .replace(/\\t/g, '  ')
-      .trim();
-    
-    // Replace semicolons that are used as line separators with newlines
-    // But only if the line doesn't start with graph/flowchart declaration
-    if (cleaned.includes(';') && !cleaned.includes('\n')) {
-      cleaned = cleaned.replace(/;\s*/g, '\n    ');
-    }
-    
-    // Ensure it starts with a valid graph declaration
-    if (!cleaned.match(/^(graph|flowchart|sequenceDiagram|classDiagram)/i)) {
-      cleaned = 'graph TD\n    ' + cleaned;
-    }
-    
-    return cleaned;
-  };
-
-  const renderDiagram = async (container: HTMLDivElement, diagramStr: string, idSuffix: string = '') => {
-    if (!container) return false;
-    
-    container.innerHTML = '';
+  const renderDiagram = useCallback(async (diagramStr: string): Promise<{ success: boolean; svg?: string }> => {
     initMermaid();
     
     try {
-      let cleanDiagram = cleanDiagramString(diagramStr);
-      
-      // Generate unique ID
-      const id = `mermaid-${variant}-${idSuffix}-${Date.now()}`;
+      const cleanDiagram = cleanDiagramString(diagramStr);
+      const id = `mermaid-${variant}-${Date.now()}-${renderAttemptRef.current++}`;
       
       const { svg } = await mermaid.render(id, cleanDiagram);
-      container.innerHTML = svg;
-      
-      // Style the SVG
-      const svgElement = container.querySelector('svg');
-      if (svgElement) {
-        svgElement.style.maxWidth = '100%';
-        svgElement.style.height = 'auto';
-        svgElement.style.minHeight = '200px';
-      }
-      
-      return true;
+      return { success: true, svg };
     } catch (error) {
       console.error('Mermaid rendering error with provided diagram:', error);
       
       // Try with default diagram
       try {
-        const id = `mermaid-fallback-${variant}-${idSuffix}-${Date.now()}`;
+        const id = `mermaid-fallback-${variant}-${Date.now()}-${renderAttemptRef.current++}`;
         const { svg } = await mermaid.render(id, DEFAULT_DIAGRAM);
-        container.innerHTML = svg;
-        
-        const svgElement = container.querySelector('svg');
-        if (svgElement) {
-          svgElement.style.maxWidth = '100%';
-          svgElement.style.height = 'auto';
-          svgElement.style.minHeight = '200px';
-        }
-        
-        return true;
+        return { success: true, svg };
       } catch (fallbackError) {
         console.error('Fallback diagram also failed:', fallbackError);
-        return false;
+        return { success: false };
       }
     }
-  };
+  }, [variant]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const render = async () => {
-      if (containerRef.current && diagram) {
-        const success = await renderDiagram(containerRef.current, diagram, 'main');
-        setIsRendered(success);
-        setRenderError(!success);
+      if (!diagram) return;
+      
+      const result = await renderDiagram(diagram);
+      
+      if (isMounted) {
+        if (result.success && result.svg) {
+          setSvgContent(result.svg);
+          setIsRendered(true);
+          setRenderError(false);
+        } else {
+          setRenderError(true);
+          setIsRendered(false);
+        }
       }
     };
 
     render();
-  }, [diagram, variant]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [diagram, renderDiagram]);
 
+  // Apply SVG to container when content changes
   useEffect(() => {
-    if (isFullscreenOpen && fullscreenContainerRef.current && diagram) {
-      renderDiagram(fullscreenContainerRef.current, diagram, 'fullscreen');
+    if (containerRef.current && svgContent) {
+      containerRef.current.innerHTML = svgContent;
+      const svgElement = containerRef.current.querySelector('svg');
+      if (svgElement) {
+        svgElement.style.maxWidth = '100%';
+        svgElement.style.height = 'auto';
+        svgElement.style.minHeight = '200px';
+      }
     }
-  }, [isFullscreenOpen, diagram, variant]);
+  }, [svgContent]);
+
+  // Apply SVG to fullscreen container
+  useEffect(() => {
+    if (isFullscreenOpen && fullscreenContainerRef.current && svgContent) {
+      fullscreenContainerRef.current.innerHTML = svgContent;
+      const svgElement = fullscreenContainerRef.current.querySelector('svg');
+      if (svgElement) {
+        svgElement.style.maxWidth = '100%';
+        svgElement.style.height = 'auto';
+        svgElement.style.minHeight = '400px';
+      }
+    }
+  }, [isFullscreenOpen, svgContent]);
 
   const handleRetry = async () => {
-    if (containerRef.current) {
+    setRenderError(false);
+    setIsRendered(false);
+    
+    const result = await renderDiagram(diagram);
+    
+    if (result.success && result.svg) {
+      setSvgContent(result.svg);
+      setIsRendered(true);
       setRenderError(false);
-      const success = await renderDiagram(containerRef.current, diagram, 'retry');
-      setIsRendered(success);
-      setRenderError(!success);
+    } else {
+      setRenderError(true);
     }
   };
 
