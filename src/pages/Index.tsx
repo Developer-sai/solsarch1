@@ -239,13 +239,11 @@ function FeatureCard({
   );
 }
 
-function SmallFeature({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30 border border-border/30">
-      <div className="text-primary">{icon}</div>
-      <span className="text-sm text-muted-foreground">{text}</span>
-    </div>
-  );
-}
+const SmallFeature = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
+  <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30 border border-border/30">
+    <div className="text-primary">{icon}</div>
+    <span className="text-sm text-muted-foreground">{text}</span>
+  </div>
+);
 
 export default Index;
