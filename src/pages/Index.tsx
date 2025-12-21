@@ -8,8 +8,13 @@ import { GPUDashboard } from '@/components/app/GPUDashboard';
 import { Recommendations } from '@/components/app/Recommendations';
 import { TradeOffSliders } from '@/components/app/TradeOffSliders';
 import { ExportButton } from '@/components/app/ExportButton';
+import { ResourceRightsizing } from '@/components/app/ResourceRightsizing';
+import { CostBreakdown } from '@/components/app/CostBreakdown';
+import { SpotOptimization } from '@/components/app/SpotOptimization';
+import { ObservabilityPanel } from '@/components/app/ObservabilityPanel';
+import { GPUOptimization } from '@/components/app/GPUOptimization';
 import { Requirements, ArchitectureResult } from '@/types/architecture';
-import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 
@@ -162,8 +167,32 @@ const Index = () => {
                 />
               </div>
 
+              {/* ScaleOps-inspired features */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-8 animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
+                <FeatureCard
+                  icon={<Activity className="w-5 h-5" />}
+                  title="Resource Rightsizing"
+                  description="Auto-optimize CPU & memory based on actual usage"
+                />
+                <FeatureCard
+                  icon={<Zap className="w-5 h-5" />}
+                  title="Spot Optimization"
+                  description="Save up to 70% with intelligent Spot placement"
+                />
+                <FeatureCard
+                  icon={<Server className="w-5 h-5" />}
+                  title="GPU Workload Tuning"
+                  description="Maximize GPU utilization with MIG-aware partitioning"
+                />
+                <FeatureCard
+                  icon={<BarChart3 className="w-5 h-5" />}
+                  title="Cost Allocation"
+                  description="Break down costs by team, namespace, and service"
+                />
+              </div>
+
               {/* Additional features */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-12 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-6 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
                 <SmallFeature icon={<BarChart3 className="w-4 h-4" />} text="Cost Optimization" />
                 <SmallFeature icon={<Shield className="w-4 h-4" />} text="Security Best Practices" />
                 <SmallFeature icon={<Globe className="w-4 h-4" />} text="Multi-Region Support" />
@@ -200,6 +229,21 @@ const Index = () => {
                 variant={result.architectures[selectedVariant].variant}
               />
             </div>
+
+            {/* ScaleOps-inspired: Resource & GPU Intelligence */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              <ResourceRightsizing />
+              <GPUOptimization />
+            </div>
+
+            {/* ScaleOps-inspired: Cost & Spot Optimization */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              <CostBreakdown />
+              <SpotOptimization />
+            </div>
+
+            {/* ScaleOps-inspired: Observability */}
+            <ObservabilityPanel />
 
             <div className="grid lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
