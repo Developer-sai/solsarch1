@@ -13,10 +13,13 @@ import { CostBreakdown } from '@/components/app/CostBreakdown';
 import { SpotOptimization } from '@/components/app/SpotOptimization';
 import { ObservabilityPanel } from '@/components/app/ObservabilityPanel';
 import { GPUOptimization } from '@/components/app/GPUOptimization';
+import { CloudBillAnalyzer } from '@/components/app/CloudBillAnalyzer';
+import { OneClickOptimizations } from '@/components/app/OneClickOptimizations';
 import { Requirements, ArchitectureResult } from '@/types/architecture';
-import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type ViewMode = 'landing' | 'wizard' | 'results';
 
@@ -185,9 +188,9 @@ const Index = () => {
                   description="Maximize GPU utilization with MIG-aware partitioning"
                 />
                 <FeatureCard
-                  icon={<BarChart3 className="w-5 h-5" />}
-                  title="Cost Allocation"
-                  description="Break down costs by team, namespace, and service"
+                  icon={<FileText className="w-5 h-5" />}
+                  title="Bill Analyzer"
+                  description="Upload your cloud bill and find savings instantly"
                 />
               </div>
 
@@ -230,20 +233,38 @@ const Index = () => {
               />
             </div>
 
-            {/* ScaleOps-inspired: Resource & GPU Intelligence */}
-            <div className="grid lg:grid-cols-2 gap-8">
-              <ResourceRightsizing />
-              <GPUOptimization />
-            </div>
-
-            {/* ScaleOps-inspired: Cost & Spot Optimization */}
-            <div className="grid lg:grid-cols-2 gap-8">
-              <CostBreakdown />
-              <SpotOptimization />
-            </div>
-
-            {/* ScaleOps-inspired: Observability */}
-            <ObservabilityPanel />
+            {/* Tabbed optimization sections */}
+            <Tabs defaultValue="optimizations" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="optimizations">One-Click Optimizations</TabsTrigger>
+                <TabsTrigger value="bill">Bill Analyzer</TabsTrigger>
+                <TabsTrigger value="resources">Resource Intelligence</TabsTrigger>
+                <TabsTrigger value="observability">Observability</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="optimizations" className="mt-6">
+                <OneClickOptimizations />
+              </TabsContent>
+              
+              <TabsContent value="bill" className="mt-6">
+                <CloudBillAnalyzer />
+              </TabsContent>
+              
+              <TabsContent value="resources" className="mt-6 space-y-8">
+                <div className="grid lg:grid-cols-2 gap-8">
+                  <ResourceRightsizing />
+                  <GPUOptimization />
+                </div>
+                <div className="grid lg:grid-cols-2 gap-8">
+                  <CostBreakdown />
+                  <SpotOptimization />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="observability" className="mt-6">
+                <ObservabilityPanel />
+              </TabsContent>
+            </Tabs>
 
             <div className="grid lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
