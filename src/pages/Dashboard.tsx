@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Cloud, LogOut, Sparkles, MessageSquare, ListChecks, Layout, Globe, Smartphone, Server, Palette, Database, Layers } from "lucide-react";
+import { Cloud, LogOut, Sparkles, MessageSquare, ListChecks, Layout, Globe, Smartphone, Server, Palette, Database, Layers, User, History, HelpCircle, BookOpen, Mail } from "lucide-react";
 
 export default function Dashboard() {
   const { user, loading, signOut } = useAuth();
@@ -49,8 +49,18 @@ export default function Dashboard() {
             </div>
             <span className="text-lg font-bold">SolsArch</span>
           </Link>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden sm:block">{user.email}</span>
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/history" className="text-sm text-muted-foreground hover:text-foreground transition-colors">History</Link>
+            <Link to="/guide" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Guide</Link>
+            <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
+          </nav>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Link to="/profile">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">Profile</span>
+              </Button>
+            </Link>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="w-4 h-4" />
             </Button>
@@ -125,6 +135,43 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Quick Links */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Quick Links</h2>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/history">
+              <Button variant="outline" size="sm" className="gap-2">
+                <History className="w-4 h-4" />
+                Chat History
+              </Button>
+            </Link>
+            <Link to="/profile">
+              <Button variant="outline" size="sm" className="gap-2">
+                <User className="w-4 h-4" />
+                Profile
+              </Button>
+            </Link>
+            <Link to="/guide">
+              <Button variant="outline" size="sm" className="gap-2">
+                <BookOpen className="w-4 h-4" />
+                Guide
+              </Button>
+            </Link>
+            <Link to="/faq">
+              <Button variant="outline" size="sm" className="gap-2">
+                <HelpCircle className="w-4 h-4" />
+                FAQ
+              </Button>
+            </Link>
+            <Link to="/contact">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Mail className="w-4 h-4" />
+                Contact
+              </Button>
+            </Link>
+          </div>
+        </div>
+
         {/* Features grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <FeatureCard 
@@ -149,6 +196,25 @@ export default function Dashboard() {
           />
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-card/30 py-6 mt-12">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Cloud className="w-5 h-5 text-primary" />
+              <span className="font-semibold">SolsArch</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-muted-foreground">
+              <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
+              <Link to="/guide" className="hover:text-foreground transition-colors">Guide</Link>
+              <Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
+              <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+            </div>
+            <p className="text-sm text-muted-foreground">© 2024 SolsArch</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
