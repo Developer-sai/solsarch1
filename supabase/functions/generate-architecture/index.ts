@@ -17,7 +17,115 @@ interface RequirementsInput {
   budgetMin: number;
   budgetMax: number;
   additionalNotes: string;
+  deploymentStrategy?: 'single-cloud' | 'multi-cloud' | 'hybrid';
+  existingInfrastructure?: string;
 }
+
+const ENHANCED_SYSTEM_PROMPT = `You are SolsArch AI, an elite cloud solutions architect with 15+ years of experience designing production systems for Fortune 500 companies.
+
+## YOUR EXPERTISE
+- Multi-cloud and hybrid cloud architectures
+- Cloud migration strategies (on-premise to cloud, cloud-to-cloud)
+- Enterprise-scale systems handling millions of requests
+- GPU cluster optimization for AI/ML workloads
+- Compliance implementations (SOC2, HIPAA, PCI-DSS, GDPR, DPDP, ISO 27001)
+- Cost optimization that has saved clients $10M+ annually
+
+## CRITICAL TASK
+Generate exactly 3 architecture variants. Each variant must be production-ready and realistic.
+
+## MULTI-CLOUD SUPPORT
+When designing architectures, consider:
+1. **Single-Cloud**: All components on one provider (cost-optimized, balanced, performance variants)
+2. **Multi-Cloud**: Workloads distributed across providers for optimal cost/performance
+   - Example: Frontend on AWS CloudFront, Backend on GCP Kubernetes, Database on Azure
+3. **Hybrid**: Mix of on-premise and cloud, or primary + DR on different clouds
+
+## OUTPUT FORMAT
+Return ONLY valid JSON (no markdown) with this structure:
+
+{
+  "architectures": [
+    {
+      "variant": "cost-optimized",
+      "name": "Cost-Optimized Architecture",
+      "description": "2-3 sentences explaining HOW costs are minimized while meeting requirements",
+      "deploymentModel": "single-cloud" | "multi-cloud" | "hybrid",
+      "components": [
+        {
+          "name": "Descriptive Component Name",
+          "serviceType": "compute|database|storage|networking|cache|queue|cdn|gpu|security|monitoring",
+          "primaryProvider": "aws|azure|gcp|oci",
+          "providers": {
+            "aws": { "service": "Service Name", "sku": "Specific SKU", "monthlyCost": <number> },
+            "azure": { "service": "Service Name", "sku": "Specific SKU", "monthlyCost": <number> },
+            "gcp": { "service": "Service Name", "sku": "Specific SKU", "monthlyCost": <number> },
+            "oci": { "service": "Service Name", "sku": "Specific SKU", "monthlyCost": <number> }
+          }
+        }
+      ],
+      "assumptions": ["Specific assumption about usage", "Assumption about data growth"],
+      "tradeOffs": ["What you sacrifice for cost savings", "Impact on performance/reliability"],
+      "totalCosts": { "aws": <number>, "azure": <number>, "gcp": <number>, "oci": <number> },
+      "providerDistribution": {
+        "aws": { "percentage": 40, "workloads": ["Frontend CDN", "API Gateway"] },
+        "gcp": { "percentage": 60, "workloads": ["Kubernetes Backend", "BigQuery Analytics"] }
+      }
+    }
+  ],
+  "mermaidDiagram": "graph TD\\n    USER[Users] --> CDN[CDN]\\n    CDN --> LB[Load Balancer]\\n    LB --> API[API Gateway]\\n    API --> APP[App Servers]\\n    APP --> CACHE[(Cache)]\\n    APP --> DB[(Primary DB)]\\n    DB --> REPLICA[(Read Replica)]",
+  "recommendations": [
+    {
+      "type": "cost-saving|performance|reliability|security|compliance",
+      "title": "Actionable Recommendation",
+      "description": "Specific action with expected outcome",
+      "impactPercentage": <realistic_number>,
+      "priority": "high|medium|low"
+    }
+  ],
+  "migrationStrategy": {
+    "applicable": true|false,
+    "phases": [
+      {
+        "phase": 1,
+        "name": "Phase Name",
+        "duration": "2-4 weeks",
+        "description": "What happens in this phase",
+        "risks": ["Risk 1", "Risk 2"]
+      }
+    ],
+    "estimatedDowntime": "< 1 hour",
+    "totalDuration": "8-12 weeks"
+  }
+}
+
+## PRICING ACCURACY (2024-2025 rates)
+- AWS t3.medium: ~$30/mo, m5.large: ~$70/mo, c5.xlarge: ~$124/mo
+- Azure B2s: ~$30/mo, D2s_v3: ~$70/mo, F2s_v2: ~$62/mo
+- GCP e2-medium: ~$24/mo, n2-standard-2: ~$49/mo
+- OCI VM.Standard.E4.Flex: ~$22/mo (20-30% cheaper than AWS)
+- RDS db.t3.medium: ~$50/mo, db.r5.large: ~$175/mo
+- ElastiCache cache.t3.medium: ~$45/mo
+- GPU: A10G ~$1.00/hr, A100 ~$3.00/hr, H100 ~$4.50/hr
+
+## MERMAID DIAGRAM RULES
+- Simple alphanumeric node IDs (A, B, C or LB, API, DB)
+- Use --> for arrows
+- Use [...] for services, [(...)] for databases
+- Keep labels under 15 characters
+- Use \\n for newlines in JSON string
+- Maximum 12 nodes for clarity
+- For multi-cloud, use subgraphs or color coding in labels
+
+## QUALITY CHECKS
+Before responding:
+1. Total costs = sum of component costs
+2. All providers have equivalent capability
+3. Assumptions are specific to this workload
+4. Trade-offs explain WHAT you sacrifice and WHY
+5. Diagram accurately represents architecture
+6. For multi-cloud: providerDistribution adds to 100%
+7. Migration strategy only if existing infrastructure mentioned`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -32,88 +140,41 @@ serve(async (req) => {
       throw new Error("GEMINI_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert cloud solutions architect with deep knowledge of AWS, Azure, GCP, and OCI. 
-    
-Generate exactly 3 architecture variants for the given requirements. Return a valid JSON object with this exact structure:
+    // Detect deployment strategy from additional notes if not explicitly set
+    let deploymentStrategy = requirements.deploymentStrategy || 'single-cloud';
+    const notes = requirements.additionalNotes?.toLowerCase() || '';
+    const hasExisting = requirements.existingInfrastructure || notes.includes('existing') || notes.includes('current');
 
-{
-  "architectures": [
-    {
-      "variant": "cost-optimized",
-      "name": "Cost-Optimized Architecture",
-      "description": "Brief description focusing on cost efficiency",
-      "components": [
-        {
-          "name": "Component Name",
-          "serviceType": "compute|database|storage|networking|cache|queue|cdn|gpu",
-          "providers": {
-            "aws": { "service": "EC2", "sku": "t3.medium", "monthlyCost": 30 },
-            "azure": { "service": "Virtual Machines", "sku": "B2s", "monthlyCost": 28 },
-            "gcp": { "service": "Compute Engine", "sku": "e2-medium", "monthlyCost": 25 },
-            "oci": { "service": "Compute", "sku": "VM.Standard.E4.Flex", "monthlyCost": 20 }
-          }
-        }
-      ],
-      "assumptions": ["Assumption 1", "Assumption 2"],
-      "tradeOffs": ["Trade-off 1", "Trade-off 2"],
-      "totalCosts": { "aws": 500, "azure": 480, "gcp": 450, "oci": 400 }
-    },
-    {
-      "variant": "balanced",
-      "name": "Balanced Architecture",
-      "description": "Balance between cost and performance",
-      "components": [...],
-      "assumptions": [...],
-      "tradeOffs": [...],
-      "totalCosts": {...}
-    },
-    {
-      "variant": "performance-optimized", 
-      "name": "Performance-Optimized Architecture",
-      "description": "Maximum performance and reliability",
-      "components": [...],
-      "assumptions": [...],
-      "tradeOffs": [...],
-      "totalCosts": {...}
+    if (notes.includes('multi-cloud') || notes.includes('multiple cloud')) {
+      deploymentStrategy = 'multi-cloud';
+    } else if (notes.includes('hybrid') || notes.includes('on-premise')) {
+      deploymentStrategy = 'hybrid';
     }
-  ],
-  "mermaidDiagram": "graph TD\\n    LB[Load Balancer] --> WS[Web Server]\\n    WS --> API[API Gateway]\\n    API --> APP[App Server]\\n    APP --> CACHE[(Redis)]\\n    APP --> DB[(Database)]\\n    APP --> QUEUE[Queue]\\n    QUEUE --> WORKER[Workers]\\n    CDN[CDN] --> LB",
-  "recommendations": [
-    {
-      "type": "cost-saving",
-      "title": "Use Reserved Instances",
-      "description": "Save up to 40% with 1-year commitment",
-      "impactPercentage": 40,
-      "priority": "high"
-    }
-  ]
-}
 
-CRITICAL: For mermaidDiagram:
-- Use simple node IDs without special characters (letters and numbers only)
-- Use --> for arrows
-- Use [...] for rectangular nodes and [(...)] for database/cylinder nodes
-- Keep node labels short and simple (no special characters, no parentheses in labels)
-- Use \\n for newlines in the JSON string
-- Example: "graph TD\\n    A[Load Balancer] --> B[Server]\\n    B --> C[(Database)]"
+    const userPrompt = `## ARCHITECTURE REQUEST
 
-Be realistic with pricing based on current 2024 cloud pricing. Include GPU instances if the app type involves AI/ML.`;
+### Requirements
+- **Application Type**: ${requirements.appType}
+- **Scale**: ${requirements.expectedUsers.toLocaleString()} monthly users, ${requirements.requestsPerSecond} RPS
+- **Data Volume**: ${requirements.dataSizeGB} GB
+- **Performance**: ${requirements.latencyTargetMs}ms latency (p99), ${requirements.availabilitySLA}% SLA
+- **Regions**: ${requirements.regions.join(', ')}
+- **Compliance**: ${requirements.compliance.length > 0 ? requirements.compliance.join(', ') : 'None specified'}
+- **Budget**: $${requirements.budgetMin.toLocaleString()} - $${requirements.budgetMax.toLocaleString()}/month
+- **Deployment Strategy**: ${deploymentStrategy}
+${requirements.existingInfrastructure ? `- **Existing Infrastructure**: ${requirements.existingInfrastructure}` : ''}
+${requirements.additionalNotes ? `- **Additional Notes**: ${requirements.additionalNotes}` : ''}
 
-    const userPrompt = `Design cloud architectures for:
-- App Type: ${requirements.appType}
-- Expected Users: ${requirements.expectedUsers.toLocaleString()}
-- Requests/Second: ${requirements.requestsPerSecond}
-- Data Size: ${requirements.dataSizeGB} GB
-- Latency Target: ${requirements.latencyTargetMs}ms
-- Availability SLA: ${requirements.availabilitySLA}%
-- Regions: ${requirements.regions.join(', ')}
-- Compliance: ${requirements.compliance.join(', ') || 'None specified'}
-- Monthly Budget: $${requirements.budgetMin} - $${requirements.budgetMax}
-- Additional Notes: ${requirements.additionalNotes || 'None'}
+### Instructions
+1. Design 3 production-ready architecture variants
+2. ${deploymentStrategy === 'multi-cloud' ? 'For at least one variant, distribute workloads across multiple cloud providers for optimal cost/performance' : deploymentStrategy === 'hybrid' ? 'Include hybrid cloud considerations with on-premise integration' : 'Focus on single-cloud deployment with provider comparisons'}
+3. ${hasExisting ? 'Include migration strategy from existing infrastructure' : 'Design greenfield architecture'}
+4. Provide realistic 2024-2025 pricing
+5. Include specific, actionable recommendations
 
 Return ONLY valid JSON, no markdown formatting.`;
 
-    console.log("Calling Google Gemini API with enhanced prompt...");
+    console.log(`Generating ${deploymentStrategy} architecture for ${requirements.appType}...`);
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
@@ -125,7 +186,7 @@ Return ONLY valid JSON, no markdown formatting.`;
           {
             role: "user",
             parts: [
-              { text: systemPrompt + "\n\n" + userPrompt }
+              { text: ENHANCED_SYSTEM_PROMPT + "\n\n" + userPrompt }
             ]
           }
         ],
@@ -163,7 +224,7 @@ Return ONLY valid JSON, no markdown formatting.`;
       throw new Error("No content in Gemini response");
     }
 
-    console.log("Gemini Response received, parsing...");
+    console.log("Architecture generated successfully");
 
     // Clean and parse the JSON response
     let cleanedContent = content
@@ -171,13 +232,25 @@ Return ONLY valid JSON, no markdown formatting.`;
       .replace(/```\n?/g, '')
       .trim();
 
+    // Handle potential JSON wrapped in extra characters
+    const jsonStart = cleanedContent.indexOf('{');
+    const jsonEnd = cleanedContent.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      cleanedContent = cleanedContent.substring(jsonStart, jsonEnd + 1);
+    }
+
     let architectureResult;
     try {
       architectureResult = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error("JSON parse error:", parseError);
       console.log("Raw content:", cleanedContent.substring(0, 500));
-      throw new Error("Failed to parse AI response as JSON");
+      throw new Error("Failed to parse AI response as JSON. Please try again.");
+    }
+
+    // Validate the response structure
+    if (!architectureResult.architectures || !Array.isArray(architectureResult.architectures)) {
+      throw new Error("Invalid response structure: missing architectures array");
     }
 
     return new Response(JSON.stringify(architectureResult), {

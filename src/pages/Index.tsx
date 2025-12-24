@@ -1,304 +1,168 @@
-import { useState } from 'react';
-import { AppHeader } from '@/components/app/AppHeader';
-import { RequirementsWizard } from '@/components/app/RequirementsWizard';
-import { ChatInterface } from '@/components/app/ChatInterface';
-import { ArchitectureView } from '@/components/app/ArchitectureView';
-import { CostComparison } from '@/components/app/CostComparison';
-import { ArchitectureDiagram } from '@/components/app/ArchitectureDiagram';
-import { GPUDashboard } from '@/components/app/GPUDashboard';
-import { Recommendations } from '@/components/app/Recommendations';
-import { TradeOffSliders } from '@/components/app/TradeOffSliders';
-import { ExportButton } from '@/components/app/ExportButton';
-import { ResourceRightsizing } from '@/components/app/ResourceRightsizing';
-import { CostBreakdown } from '@/components/app/CostBreakdown';
-import { SpotOptimization } from '@/components/app/SpotOptimization';
-import { ObservabilityPanel } from '@/components/app/ObservabilityPanel';
-import { GPUOptimization } from '@/components/app/GPUOptimization';
-import { CloudBillAnalyzer } from '@/components/app/CloudBillAnalyzer';
-import { OneClickOptimizations } from '@/components/app/OneClickOptimizations';
-import { Requirements, ArchitectureResult } from '@/types/architecture';
-import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText, MessageSquare, Wand2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-type ViewMode = 'landing' | 'wizard' | 'chat' | 'results';
-type InputMode = 'wizard' | 'chat';
+import { Cloud, ArrowRight, DollarSign, Cpu, Zap, BarChart3, Shield, Globe, Activity, Server, FileText, MessageSquare, Wand2, Sparkles } from 'lucide-react';
 
 const Index = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('landing');
-  const [inputMode, setInputMode] = useState<InputMode>('wizard');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [requirements, setRequirements] = useState<Requirements | null>(null);
-  const [result, setResult] = useState<ArchitectureResult | null>(null);
-  const [selectedVariant, setSelectedVariant] = useState<number>(1);
-  const { toast } = useToast();
-
-  const handleGenerate = async (reqs: Requirements) => {
-    setRequirements(reqs);
-    setIsGenerating(true);
-
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-architecture`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ requirements: reqs }),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate architecture');
-      }
-
-      const data: ArchitectureResult = await response.json();
-      setResult(data);
-      setViewMode('results');
-
-      toast({
-        title: "Architecture Generated!",
-        description: "3 architecture variants created with cost comparisons.",
-      });
-    } catch (error) {
-      console.error('Generation error:', error);
-      toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleChatArchitectureGenerated = (architectureResult: ArchitectureResult, reqs: Requirements) => {
-    setResult(architectureResult);
-    setRequirements(reqs);
-    setViewMode('results');
-  };
-
-  const handleReset = () => {
-    setViewMode('landing');
-    setResult(null);
-    setRequirements(null);
-  };
-
-  const handleStartDesign = (mode: InputMode) => {
-    setInputMode(mode);
-    setViewMode(mode);
-  };
-
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader
-        onReset={handleReset}
-        hasResults={viewMode === 'results'}
-        showExport={viewMode === 'results' && result !== null && requirements !== null}
-        exportComponent={
-          result && requirements ? (
-            <ExportButton
-              result={result}
-              requirements={requirements}
-              selectedVariant={selectedVariant}
-            />
-          ) : undefined
-        }
-      />
-
-      {isGenerating && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-card border border-border shadow-2xl">
-            <div className="relative">
-              <Loader2 className="w-12 h-12 text-primary animate-spin" />
-              <Sparkles className="w-5 h-5 text-primary absolute -top-1 -right-1 animate-pulse" />
+      {/* Header */}
+      <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-info flex items-center justify-center">
+              <Cloud className="w-4 h-4 text-primary-foreground" />
             </div>
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-foreground">Generating Architecture</h3>
-              <p className="text-muted-foreground">AI is designing your cloud infrastructure...</p>
-            </div>
+            <span className="text-lg font-bold">SolsArch</span>
           </div>
+          <nav className="hidden md:flex items-center gap-6">
+            <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              About
+            </Link>
+            <Link to="/design">
+              <Button variant="default" size="sm">Get Started</Button>
+            </Link>
+          </nav>
         </div>
-      )}
+      </header>
 
-      {/* Landing View */}
-      {viewMode === 'landing' && (
-        <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
-          {/* Background effects */}
-          <div className="absolute inset-0 bg-grid-pattern bg-grid opacity-5" />
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] animate-pulse-glow" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-info/20 rounded-full blur-[100px]" />
+      {/* Hero Section */}
+      <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-grid-pattern bg-grid opacity-5" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] animate-pulse-glow" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-info/20 rounded-full blur-[100px]" />
 
-          <div className="container relative mx-auto px-6 pt-20 pb-20">
-            <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/80 border border-border/50 backdrop-blur-sm mb-8 animate-fade-in">
-                <Zap className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-muted-foreground">
-                  AI-Powered Solutions Architect
-                </span>
-              </div>
+        <div className="container relative mx-auto px-6 pt-20 pb-20">
+          <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/80 border border-border/50 backdrop-blur-sm mb-8 animate-fade-in">
+              <Zap className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-muted-foreground">
+                AI-Powered Solutions Architect
+              </span>
+            </div>
 
-              {/* Headline */}
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-                Design. Compare.{" "}
-                <span className="gradient-text">Optimize.</span>
-              </h1>
+            {/* Headline */}
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              Design. Compare.{" "}
+              <span className="gradient-text">Optimize.</span>
+            </h1>
 
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mb-10 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-                Your professional AI-based Solutions Architect for everything - from small-scale apps to enterprise systems. SolsArch is here for you.
-              </p>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mb-10 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+              Your professional AI-based Solutions Architect for everything - from small-scale apps to enterprise systems. SolsArch is here for you.
+            </p>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-                <Button onClick={() => handleStartDesign('wizard')} variant="hero" size="xl" className="gap-2">
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+              <Link to="/design?mode=wizard">
+                <Button variant="hero" size="xl" className="gap-2">
                   <Wand2 className="w-5 h-5" />
                   Guided Wizard
                   <ArrowRight className="w-5 h-5" />
                 </Button>
-                <Button onClick={() => handleStartDesign('chat')} variant="outline" size="xl" className="gap-2 border-primary/50 hover:bg-primary/10">
+              </Link>
+              <Link to="/design?mode=chat">
+                <Button variant="outline" size="xl" className="gap-2 border-primary/50 hover:bg-primary/10">
                   <MessageSquare className="w-5 h-5" />
                   Chat with AI
                   <Sparkles className="w-5 h-5" />
                 </Button>
-              </div>
-
-              {/* Feature cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-                <FeatureCard
-                  icon={<Cloud className="w-6 h-6" />}
-                  title="Multi-Cloud Architecture"
-                  description="Design for AWS, Azure, GCP, OCI with provider-specific optimizations"
-                />
-                <FeatureCard
-                  icon={<DollarSign className="w-6 h-6" />}
-                  title="Live Cost Intelligence"
-                  description="Real-time pricing comparison across all major cloud providers"
-                />
-                <FeatureCard
-                  icon={<Cpu className="w-6 h-6" />}
-                  title="GPU Price-Performance"
-                  description="Compare A100, H100, L40, T4 costs per TFLOP across providers"
-                />
-              </div>
-
-              {/* ScaleOps-inspired features */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-8 animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
-                <FeatureCard
-                  icon={<Activity className="w-5 h-5" />}
-                  title="Resource Rightsizing"
-                  description="Auto-optimize CPU & memory based on actual usage"
-                />
-                <FeatureCard
-                  icon={<Zap className="w-5 h-5" />}
-                  title="Spot Optimization"
-                  description="Save up to 70% with intelligent Spot placement"
-                />
-                <FeatureCard
-                  icon={<Server className="w-5 h-5" />}
-                  title="GPU Workload Tuning"
-                  description="Maximize GPU utilization with MIG-aware partitioning"
-                />
-                <FeatureCard
-                  icon={<FileText className="w-5 h-5" />}
-                  title="Bill Analyzer"
-                  description="Upload your cloud bill and find savings instantly"
-                />
-              </div>
-
-              {/* Additional features */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-6 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
-                <SmallFeature icon={<BarChart3 className="w-4 h-4" />} text="Cost Optimization" />
-                <SmallFeature icon={<Shield className="w-4 h-4" />} text="Security Best Practices" />
-                <SmallFeature icon={<Globe className="w-4 h-4" />} text="Multi-Region Support" />
-                <SmallFeature icon={<Zap className="w-4 h-4" />} text="Instant Generation" />
-              </div>
+              </Link>
             </div>
-          </div>
-        </main>
-      )}
 
-      {/* Wizard View */}
-      {viewMode === 'wizard' && (
-        <main className="container mx-auto px-4 py-8">
-          <RequirementsWizard onSubmit={handleGenerate} isLoading={isGenerating} />
-        </main>
-      )}
-
-      {/* Chat View */}
-      {viewMode === 'chat' && (
-        <main className="container mx-auto px-4 py-8">
-          <ChatInterface onArchitectureGenerated={handleChatArchitectureGenerated} />
-        </main>
-      )}
-
-      {/* Results View */}
-      {viewMode === 'results' && result && (
-        <main className="container mx-auto px-4 py-8">
-          <div className="space-y-8 animate-fade-in">
-            <ArchitectureView
-              architectures={result.architectures}
-              selectedVariant={selectedVariant}
-              onVariantChange={setSelectedVariant}
-            />
-
-            <div className="grid lg:grid-cols-2 gap-8">
-              <CostComparison
-                architecture={result.architectures[selectedVariant]}
+            {/* Feature cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+              <FeatureCard
+                icon={<Cloud className="w-6 h-6" />}
+                title="Multi-Cloud Architecture"
+                description="Design for AWS, Azure, GCP, OCI with provider-specific optimizations"
               />
-              <ArchitectureDiagram
-                diagram={result.mermaidDiagram}
-                variant={result.architectures[selectedVariant].variant}
+              <FeatureCard
+                icon={<DollarSign className="w-6 h-6" />}
+                title="Live Cost Intelligence"
+                description="Real-time pricing comparison across all major cloud providers"
+              />
+              <FeatureCard
+                icon={<Cpu className="w-6 h-6" />}
+                title="GPU Price-Performance"
+                description="Compare A100, H100, L40, T4 costs per TFLOP across providers"
               />
             </div>
 
-            {/* Tabbed optimization sections */}
-            <Tabs defaultValue="optimizations" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="optimizations">One-Click Optimizations</TabsTrigger>
-                <TabsTrigger value="bill">Bill Analyzer</TabsTrigger>
-                <TabsTrigger value="resources">Resource Intelligence</TabsTrigger>
-                <TabsTrigger value="observability">Observability</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="optimizations" className="mt-6">
-                <OneClickOptimizations />
-              </TabsContent>
-
-              <TabsContent value="bill" className="mt-6">
-                <CloudBillAnalyzer />
-              </TabsContent>
-
-              <TabsContent value="resources" className="mt-6 space-y-8">
-                <div className="grid lg:grid-cols-2 gap-8">
-                  <ResourceRightsizing />
-                  <GPUOptimization />
-                </div>
-                <div className="grid lg:grid-cols-2 gap-8">
-                  <CostBreakdown />
-                  <SpotOptimization />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="observability" className="mt-6">
-                <ObservabilityPanel />
-              </TabsContent>
-            </Tabs>
-
-            <div className="grid lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <GPUDashboard />
-              </div>
-              <TradeOffSliders />
+            {/* ScaleOps-inspired features */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-8 animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
+              <FeatureCard
+                icon={<Activity className="w-5 h-5" />}
+                title="Resource Rightsizing"
+                description="Auto-optimize CPU & memory based on actual usage"
+              />
+              <FeatureCard
+                icon={<Zap className="w-5 h-5" />}
+                title="Spot Optimization"
+                description="Save up to 70% with intelligent Spot placement"
+              />
+              <FeatureCard
+                icon={<Server className="w-5 h-5" />}
+                title="GPU Workload Tuning"
+                description="Maximize GPU utilization with MIG-aware partitioning"
+              />
+              <FeatureCard
+                icon={<FileText className="w-5 h-5" />}
+                title="Bill Analyzer"
+                description="Upload your cloud bill and find savings instantly"
+              />
             </div>
 
-            <Recommendations recommendations={result.recommendations} />
+            {/* Additional features */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-6 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+              <SmallFeature icon={<BarChart3 className="w-4 h-4" />} text="Cost Optimization" />
+              <SmallFeature icon={<Shield className="w-4 h-4" />} text="Security Best Practices" />
+              <SmallFeature icon={<Globe className="w-4 h-4" />} text="Multi-Region Support" />
+              <SmallFeature icon={<Zap className="w-4 h-4" />} text="Instant Generation" />
+            </div>
+
+            {/* Enterprise CTA */}
+            <div className="mt-16 p-8 rounded-2xl bg-gradient-to-br from-primary/10 to-info/10 border border-primary/20 w-full max-w-3xl">
+              <h2 className="text-2xl font-bold mb-3">Built for Enterprise Scale</h2>
+              <p className="text-muted-foreground mb-6">
+                Already have cloud infrastructure? SolsArch analyzes your existing setup, identifies optimization opportunities,
+                and helps plan multi-cloud migrations with compliance gap analysis.
+              </p>
+              <Link to="/about">
+                <Button variant="outline" className="gap-2">
+                  Learn More
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
           </div>
-        </main>
-      )}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-card/30 backdrop-blur-sm">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-info flex items-center justify-center">
+                <Cloud className="w-3 h-3 text-primary-foreground" />
+              </div>
+              <span className="text-sm font-medium">SolsArch</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Built with ❤️ for cloud architects and developers
+            </p>
+            <div className="flex items-center gap-4">
+              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                About
+              </Link>
+              <Link to="/design" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Get Started
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
