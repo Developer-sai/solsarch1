@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { AppHeader } from '@/components/app/AppHeader';
 import { RequirementsWizard } from '@/components/app/RequirementsWizard';
 import { ArchitectureView } from '@/components/app/ArchitectureView';
@@ -37,12 +38,26 @@ const Index = () => {
     setIsGenerating(true);
 
     try {
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to generate architectures.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-architecture`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ requirements: reqs }),
         }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ArchitectureResult } from '@/types/architecture';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -103,12 +104,26 @@ export const ArchitectChat = ({ onArchitectureGenerated }: ArchitectChatProps) =
     setIsLoading(true);
 
     try {
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to use the AI architect.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/architect-chat`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             messages: [...messages, userMessage].map(m => ({
@@ -151,12 +166,26 @@ export const ArchitectChat = ({ onArchitectureGenerated }: ArchitectChatProps) =
     setIsLoading(true);
     
     try {
+      // Get current session for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to generate architectures.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/architect-chat`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             messages: messages.map(m => ({
