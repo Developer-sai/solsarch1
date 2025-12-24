@@ -15,13 +15,14 @@ import { ObservabilityPanel } from '@/components/app/ObservabilityPanel';
 import { GPUOptimization } from '@/components/app/GPUOptimization';
 import { CloudBillAnalyzer } from '@/components/app/CloudBillAnalyzer';
 import { OneClickOptimizations } from '@/components/app/OneClickOptimizations';
+import { ArchitectChat } from '@/components/chat/ArchitectChat';
 import { Requirements, ArchitectureResult } from '@/types/architecture';
-import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText, MessageSquare, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type ViewMode = 'landing' | 'wizard' | 'results';
+type ViewMode = 'landing' | 'wizard' | 'chat' | 'results';
 
 const Index = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('landing');
@@ -78,8 +79,17 @@ const Index = () => {
     setRequirements(null);
   };
 
-  const handleStartDesign = () => {
+  const handleStartWizard = () => {
     setViewMode('wizard');
+  };
+
+  const handleStartChat = () => {
+    setViewMode('chat');
+  };
+
+  const handleChatArchitectureGenerated = (architectureResult: ArchitectureResult) => {
+    setResult(architectureResult);
+    setViewMode('results');
   };
 
   return (
