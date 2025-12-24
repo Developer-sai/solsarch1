@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, forwardRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AppHeader } from '@/components/app/AppHeader';
@@ -20,7 +20,7 @@ import { CloudBillAnalyzer } from '@/components/app/CloudBillAnalyzer';
 import { OneClickOptimizations } from '@/components/app/OneClickOptimizations';
 import { ArchitectChat } from '@/components/chat/ArchitectChat';
 import { Requirements, ArchitectureResult } from '@/types/architecture';
-import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText, MessageSquare, ListChecks, LogIn } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText, MessageSquare, ListChecks, LogIn, Smartphone, Layout, Database, Layers, Palette } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 type ViewMode = 'landing' | 'wizard' | 'chat' | 'results';
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('landing');
   const [isGenerating, setIsGenerating] = useState(false);
   const [requirements, setRequirements] = useState<Requirements | null>(null);
@@ -36,6 +37,16 @@ const Index = () => {
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Handle URL query param for mode switching
+  useEffect(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'chat' && user) {
+      setViewMode('chat');
+    } else if (mode === 'wizard' && user) {
+      setViewMode('wizard');
+    }
+  }, [searchParams, user]);
 
   const handleGenerate = async (reqs: Requirements) => {
     setRequirements(reqs);
@@ -181,12 +192,12 @@ const Index = () => {
               
               {/* Headline */}
               <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-4 sm:mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-                Design. Compare.{" "}
-                <span className="gradient-text">Optimize.</span>
+                Architect. Plan.{" "}
+                <span className="gradient-text">Build.</span>
               </h1>
               
               <p className="text-base sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mb-6 sm:mb-10 px-2 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-                The AI Solutions Architect that designs production-ready cloud architectures with real-time pricing intelligence.
+                Your AI-powered Solutions Architect for web apps, mobile apps, cloud infrastructure, and any software system.
               </p>
               
               {/* CTA Buttons - Dual Mode */}
@@ -217,46 +228,46 @@ const Index = () => {
                 )}
               </div>
               
-              {/* Feature cards */}
+              {/* Feature cards - Application types */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 w-full animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
                 <FeatureCard
+                  icon={<Globe className="w-5 sm:w-6 h-5 sm:h-6" />}
+                  title="Web Applications"
+                  description="React, Next.js, Vue, Angular — full-stack architecture design"
+                />
+                <FeatureCard
+                  icon={<Smartphone className="w-5 sm:w-6 h-5 sm:h-6" />}
+                  title="Mobile Applications"
+                  description="Native, React Native, Flutter, PWA architecture patterns"
+                />
+                <FeatureCard
                   icon={<Cloud className="w-5 sm:w-6 h-5 sm:h-6" />}
-                  title="Multi-Cloud Architecture"
-                  description="Design for AWS, Azure, GCP, OCI with provider-specific optimizations"
-                />
-                <FeatureCard
-                  icon={<DollarSign className="w-5 sm:w-6 h-5 sm:h-6" />}
-                  title="Live Cost Intelligence"
-                  description="Real-time pricing comparison across all major cloud providers"
-                />
-                <FeatureCard
-                  icon={<Cpu className="w-5 sm:w-6 h-5 sm:h-6" />}
-                  title="GPU Price-Performance"
-                  description="Compare A100, H100, L40, T4 costs per TFLOP across providers"
+                  title="Cloud Infrastructure"
+                  description="AWS, Azure, GCP, OCI with real-time cost comparisons"
                 />
               </div>
 
-              {/* ScaleOps-inspired features */}
+              {/* More capabilities */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full mt-6 sm:mt-8 animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
                 <FeatureCard
-                  icon={<Activity className="w-4 sm:w-5 h-4 sm:h-5" />}
-                  title="Resource Rightsizing"
-                  description="Auto-optimize CPU & memory based on actual usage"
+                  icon={<Database className="w-4 sm:w-5 h-4 sm:h-5" />}
+                  title="Data Architecture"
+                  description="Database design, caching, search, and data pipelines"
                 />
                 <FeatureCard
-                  icon={<Zap className="w-4 sm:w-5 h-4 sm:h-5" />}
-                  title="Spot Optimization"
-                  description="Save up to 70% with intelligent Spot placement"
+                  icon={<Layers className="w-4 sm:w-5 h-4 sm:h-5" />}
+                  title="Microservices"
+                  description="Container orchestration and service mesh patterns"
                 />
                 <FeatureCard
-                  icon={<Server className="w-4 sm:w-5 h-4 sm:h-5" />}
-                  title="GPU Workload Tuning"
-                  description="Maximize GPU utilization with MIG-aware partitioning"
+                  icon={<Sparkles className="w-4 sm:w-5 h-4 sm:h-5" />}
+                  title="AI/ML Systems"
+                  description="LLM integration, RAG, and model serving architecture"
                 />
                 <FeatureCard
-                  icon={<FileText className="w-4 sm:w-5 h-4 sm:h-5" />}
-                  title="Bill Analyzer"
-                  description="Upload your cloud bill and find savings instantly"
+                  icon={<Layout className="w-4 sm:w-5 h-4 sm:h-5" />}
+                  title="Auto Diagrams"
+                  description="Generate professional architecture diagrams instantly"
                 />
               </div>
 
@@ -377,11 +388,14 @@ function FeatureCard({
   );
 }
 
-const SmallFeature = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
-  <div className="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-secondary/30 border border-border/30">
-    <div className="text-primary flex-shrink-0">{icon}</div>
-    <span className="text-xs sm:text-sm text-muted-foreground truncate">{text}</span>
-  </div>
+const SmallFeature = forwardRef<HTMLDivElement, { icon: React.ReactNode; text: string }>(
+  ({ icon, text }, ref) => (
+    <div ref={ref} className="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-secondary/30 border border-border/30">
+      <div className="text-primary flex-shrink-0">{icon}</div>
+      <span className="text-xs sm:text-sm text-muted-foreground truncate">{text}</span>
+    </div>
+  )
 );
+SmallFeature.displayName = 'SmallFeature';
 
 export default Index;

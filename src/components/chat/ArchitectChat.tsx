@@ -21,21 +21,33 @@ interface ArchitectChatProps {
 
 const WELCOME_MESSAGE = `Welcome to **SolsArch** — your AI Solutions Architect.
 
-I can help you design production-ready cloud architectures for any scale. Here's what I can do:
+I can help you design **any type of software system** from concept to production-ready architecture. Here's what I can do:
 
-• **Analyze** your requirements and constraints
-• **Design** multi-cloud architectures (AWS, Azure, GCP, OCI)
-• **Optimize** for cost, performance, or reliability
-• **Generate** professional diagrams and documentation
+### 🌐 Applications
+- **Web Apps** — React, Next.js, Vue, Angular, full-stack
+- **Mobile Apps** — Native, React Native, Flutter, PWA
+- **APIs** — REST, GraphQL, WebSocket, gRPC
+
+### ☁️ Infrastructure
+- **Cloud Architecture** — AWS, Azure, GCP, OCI with cost comparisons
+- **Microservices** — Container orchestration, service mesh
+- **Serverless** — Functions, event-driven systems
+
+### 🗄️ Data & AI
+- **Database Design** — SQL, NoSQL, caching, search
+- **AI/ML Systems** — LLM integration, RAG, model serving
+- **Data Pipelines** — ETL, streaming, analytics
+
+### 🔒 Security & DevOps
+- **Authentication** — OAuth, SSO, RBAC
+- **CI/CD** — Pipelines, IaC, deployment strategies
 
 **How to get started:**
-1. Describe your application or system requirements
-2. Tell me about your scale, budget, and constraints
-3. Ask questions or request specific architecture patterns
+Tell me about your idea, project, or problem. Be as detailed or as vague as you like — I'll ask clarifying questions.
 
-You can also **upload files** (requirements docs, existing architecture, cloud bills) or use **voice input**.
+You can also **upload files** (requirements docs, mockups, existing code) or use **voice input**.
 
-What would you like to architect today?`;
+What would you like to build?`;
 
 export const ArchitectChat = ({ onArchitectureGenerated }: ArchitectChatProps) => {
   const [messages, setMessages] = useState<Message[]>([
