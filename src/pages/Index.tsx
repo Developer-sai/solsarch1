@@ -152,12 +152,16 @@ const Index = () => {
                 The AI Solutions Architect that designs production-ready cloud architectures with real-time pricing intelligence across AWS, Azure, GCP, and OCI.
               </p>
               
-              {/* CTA Button */}
+              {/* CTA Buttons - Dual Mode */}
               <div className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-                <Button onClick={handleStartDesign} variant="hero" size="xl" className="gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  Start Designing
+                <Button onClick={handleStartChat} variant="hero" size="xl" className="gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Chat with AI Architect
                   <ArrowRight className="w-5 h-5" />
+                </Button>
+                <Button onClick={handleStartWizard} variant="outline" size="xl" className="gap-2 border-primary/50 text-primary hover:bg-primary/10">
+                  <ListChecks className="w-5 h-5" />
+                  Guided Wizard
                 </Button>
               </div>
               
@@ -213,6 +217,13 @@ const Index = () => {
               </div>
             </div>
           </div>
+        </main>
+      )}
+
+      {/* Chat View */}
+      {viewMode === 'chat' && (
+        <main className="h-[calc(100vh-4rem)]">
+          <ArchitectChat onArchitectureGenerated={handleChatArchitectureGenerated} />
         </main>
       )}
 
