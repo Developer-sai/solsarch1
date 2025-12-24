@@ -1,0 +1,126 @@
+role 1
+As an AWS Data Architect), you will analyze, architect, design, and actively develop cloud data warehouses, data lakes, and other cloud-based data solutions in AWS.
+
+Analyze, architect, design, and actively develop cloud data warehouses, data lakes, and other cloud-based data solutions in  AWS.
+AWS experts with strong experience in working with modern data integration frameworks, big data, and DevOps, and is proficient with data programming languages (e.g. Python, SQL).
+Design and develop scalable data ingestion frameworks to transform a variety of datasets.
+Solid knowledge in EMR, RedShift, SageMaker, and other Paas offerings from AWS.
+Innovate cloud-native data solutions such as database structures and functional capabilities, security, backup, and recovery specifications, etc.
+Build and maintain data integration utilities,  data scheduling, and monitoring capabilities, and source-to-target mappings and data lineage trees.
+Implement and manage production management processes around data ingestion, transformation, coding utilities, storage, reporting, and other data integration points.
+Lead technical teams to deliver projects and accomplish business and IT objectives.
+#LI-UNPost
+
+Job Requirement
+
+8+ years of data engineering and/or data warehousing experience.
+4+  years of deep experience in building AWS data solutions using services such as storage, virtual machines, serverless technologies, parallel processing technologies, auto-scaling, etc.
+Background in data with experience in architecture, data modeling, data engineering, and data governance using all different types of databases.
+Working knowledge of agile development including DevOps concepts
+Experience with AWS SDKs and programmatic access services
+Proficient in a relevant data/development language for cloud platforms (e.g. R, Python, Java, C#/Unix)
+Proficient in SQL
+
+role 2
+
+brand logo
+View All Jobs
+Principal Architect - Data Modelling
+
+Chennai, Hyderabad, Bangalore
+Job Description
+ Chennai | Hyderabad | Bangalore
+Tiger Analytics is a global AI and analytics consulting firm. With data and technology at the core of our solutions, our 4000+ tribe is solving problems that eventually impact the lives of millions globally. Our culture is modeled around expertise and respect with a team-first mindset. Headquartered in Silicon Valley, you’ll find our delivery centers across the globe and offices in multiple cities across India, the US, the UK, Canada, and Singapore, including a substantial remote global workforce.
+We’re Great Place to Work-Certified™. Working at Tiger Analytics, you’ll be at the heart of an AI revolution. You’ll work with teams that push the boundaries of what is possible and build solutions that energize and inspire.
+
+Curious about the role? What your typical day would look like?
+As a Principal Architect, you will work to solve some of the most complex and captivating data management problems that would enable them as a data-driven organization; Seamlessly switch between roles of an Individual Contributor, team member, and an Architect as demanded by each project to define, design, and deliver actionable insights.
+
+On a typical day, you might
+Understand the Business Requirements and translate business requirements into conceptual, logical and physical Data models.
+Work as a principal advisor on data architecture, across various data requirements, aggregation – data lake – data models – data warehouse etc.
+Lead cross-functional teams, define data strategies, and leverage the latest technologies in data handling.
+Define and govern data architecture principles, standards, and best practices to ensure consistency, scalability, and security of data assets across projects.
+Suggest best modelling approach to the client based on their requirement and target architecture.
+Analyze and understand the Datasets and guide the team in creating Source to Target Mapping and Data Dictionaries, capturing all relevant details.
+Profile the Data sets to generate relevant insights.
+Optimize the Data Models and work with the Data Engineers to define the Ingestion logic, ingestion frequency and data consumption patterns.
+Establish data governance practices, including data quality, metadata management, and data lineage, to ensure data accuracy, reliability, and compliance.
+Drives automation in modeling activities Collaborate with Business Stakeholders, Data Owners, Business Analysts, Architects to design and develop next generation data platform.
+Closely monitor the Project progress and provide regular updates to the leadership teams on the milestones, impediments etc.
+Guide /mentor team members, and review artifacts.
+Contribute to the overall data strategy and roadmaps.
+Propose and execute technical assessments, proofs of concept to promote innovation in the data space.
+Job Requirement
+ 
+What do we expect? Skills that we’d love!
+Minimum 15 years of experience
+Deep understanding of data architecture principles, data modelling, data integration, data governance, and data management technologies.
+Experience in Data strategies and developing logical and physical data models on RDBMS, NoSQL, and Cloud native databases.
+Decent experience in one or more RDBMS systems (such as Oracle, DB2, SQL Server) • Good understanding of Relational, Dimensional, Data Vault Modelling
+Experience in implementing 2 or more data models in a database with data security and access controls.
+Good experience in OLTP and OLAP systems
+Excellent Data Analysis skills with demonstrable knowledge on standard datasets and sources.
+Good Experience on one or more Cloud DW (e.g. Snowflake, Redshift, Synapse)
+Experience on one or more cloud platforms (e.g. AWS, Azure, GCP)
+Understanding of DevOps processes
+Hands-on experience in one or more Data Modelling Tools
+Good understanding of one or more ETL tool and data ingestion frameworks
+Understanding of Data Quality and Data Governance
+Good understanding of NoSQL Database and modeling techniques
+Good understanding of one or more Business Domains
+Understanding of Big Data ecosystem
+Understanding of Industry Data Models
+Hands-on experience in Python
+Experience in leading the large and complex teams
+Good understanding of agile methodology
+You are important to us, let’s stay connected!
+Every individual comes with a different set of skills and qualities so even if you don’t tick all the boxes for the role today, we urge you to apply as there might be a suitable/unique role for you tomorrow.
+We are an equal opportunity employer. Our diverse and inclusive culture and values guide us to listen, trust, respect, and encourage people to grow the way they desire.
+
+Note: The designation will be commensurate with expertise and experience. Compensation packages are among the best in the industry
+powered-by-sense
+
+role 3
+
+brand logo
+View All Jobs
+Architect and Senior Architect - Data Governance
+
+Chennai, Bangalore, Hyderabad
+Job Description
+As a Data Governance Architect, your work is a combination of hands-on contribution, customer engagement, and technical team
+management including assisting in getting new business. Overall, youʼll design, architect, deploy, and maintain big data-based data governance solutions.
+More specifically, this will involve:
+Technical management across the full life cycle of data(structured/semi-sturctured/unstructured)-based data governance projects from requirement gathering and analysis to platform selection, design of the architecture, and deployment.
+Scaling the solution in a cloud-based infrastructure or a non-cloud option and any custom configurations thereof.
+Collaborating with business consultants, analysts, data scientists, senior data engineers, and developers to develop data solutions.
+Exploring new technologies for creative business problem-solving and assisting in generating net new business
+Leading and mentoring a team of data governance engineers
+What do we expect?
+10+ years of overall technical experience with any knowledge on technology around Python/GenAI (a plus)
+5+ years in in any Data Governance tool Solutions/implementations. can be alation/collibra/atlan/purview/unity catalog/others
+Hands-on experience with Data Governance Solutions with a good understanding of the below
+Data Catalog
+Business Glossary
+Business metadata, technical metadata, operational Metadata
+Data Quality (IDQ/Anomalo/iceDQ/custom DQ APIs)
+Data Profiling
+Data Lineage
+Automation on any of the above
+
+Job Requirement
+
+Expertise And Qualification
+Hands-on experience with the following technologies:
+awareness of working on a Azure/GCP/AWS environment(s)
+Monte Carlo, Anomalo, Atlan, Collibra, Alation, IDQ, IDMC (CDQ & CDGC), Ataccama, Immuta,  Unity catalog, Securiti.ai,
+Relevant Azure AWS/GCP components required to build data solutions
+Good to know: Databricks, Snowflake,
+Familiarity working with:
+Designing/building large cloud-computing infrastructure solutions (in Azure/AWS/GCP)
+Data Quality, Governance, metadata management (incl. catalog and lineage) design and implementation
+Full life cycle of a data governance solution
+Installation and admin of any of the tools above (a Plus)
+Experience in building monitoring, dashboards debugging, and performance tuning
+powered-by-sense

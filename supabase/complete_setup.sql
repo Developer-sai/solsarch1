@@ -1,6 +1,8 @@
--- SolsArch Database Schema
--- Consolidated migration file for production deployment
--- This file combines all previous migrations into a single, comprehensive schema
+-- ============================================================================
+-- SolsArch Complete Supabase Setup
+-- Single file containing all database schema, RLS policies, and functions
+-- Execute this file in Supabase SQL Editor for complete setup
+-- ============================================================================
 
 -- ============================================================================
 -- TABLES
@@ -322,3 +324,13 @@ CREATE TRIGGER update_skus_updated_at BEFORE UPDATE ON public.skus FOR EACH ROW 
 
 DROP TRIGGER IF EXISTS update_architectures_updated_at ON public.architectures;
 CREATE TRIGGER update_architectures_updated_at BEFORE UPDATE ON public.architectures FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- ============================================================================
+-- SETUP COMPLETE
+-- ============================================================================
+-- All tables, RLS policies, functions, and triggers have been created.
+-- Next steps:
+-- 1. Deploy the Edge Function: supabase/functions/generate-architecture/index.ts
+-- 2. Set environment variables: GEMINI_API_KEY
+-- 3. Populate providers and service_categories tables with initial data
+-- ============================================================================
