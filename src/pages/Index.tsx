@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AppHeader } from '@/components/app/AppHeader';
 import { RequirementsWizard } from '@/components/app/RequirementsWizard';
+import { ChatInterface } from '@/components/app/ChatInterface';
 import { ArchitectureView } from '@/components/app/ArchitectureView';
 import { CostComparison } from '@/components/app/CostComparison';
 import { ArchitectureDiagram } from '@/components/app/ArchitectureDiagram';
@@ -16,15 +17,17 @@ import { GPUOptimization } from '@/components/app/GPUOptimization';
 import { CloudBillAnalyzer } from '@/components/app/CloudBillAnalyzer';
 import { OneClickOptimizations } from '@/components/app/OneClickOptimizations';
 import { Requirements, ArchitectureResult } from '@/types/architecture';
-import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText, MessageSquare, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-type ViewMode = 'landing' | 'wizard' | 'results';
+type ViewMode = 'landing' | 'wizard' | 'chat' | 'results';
+type InputMode = 'wizard' | 'chat';
 
 const Index = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('landing');
+  const [inputMode, setInputMode] = useState<InputMode>('wizard');
   const [isGenerating, setIsGenerating] = useState(false);
   const [requirements, setRequirements] = useState<Requirements | null>(null);
   const [result, setResult] = useState<ArchitectureResult | null>(null);
@@ -55,7 +58,7 @@ const Index = () => {
       const data: ArchitectureResult = await response.json();
       setResult(data);
       setViewMode('results');
-      
+
       toast({
         title: "Architecture Generated!",
         description: "3 architecture variants created with cost comparisons.",
@@ -72,33 +75,40 @@ const Index = () => {
     }
   };
 
+  const handleChatArchitectureGenerated = (architectureResult: ArchitectureResult, reqs: Requirements) => {
+    setResult(architectureResult);
+    setRequirements(reqs);
+    setViewMode('results');
+  };
+
   const handleReset = () => {
     setViewMode('landing');
     setResult(null);
     setRequirements(null);
   };
 
-  const handleStartDesign = () => {
-    setViewMode('wizard');
+  const handleStartDesign = (mode: InputMode) => {
+    setInputMode(mode);
+    setViewMode(mode);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader 
-        onReset={handleReset} 
+      <AppHeader
+        onReset={handleReset}
         hasResults={viewMode === 'results'}
         showExport={viewMode === 'results' && result !== null && requirements !== null}
         exportComponent={
           result && requirements ? (
-            <ExportButton 
-              result={result} 
-              requirements={requirements} 
-              selectedVariant={selectedVariant} 
+            <ExportButton
+              result={result}
+              requirements={requirements}
+              selectedVariant={selectedVariant}
             />
           ) : undefined
         }
       />
-      
+
       {isGenerating && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4 p-8 rounded-xl bg-card border border-border shadow-2xl">
@@ -121,7 +131,7 @@ const Index = () => {
           <div className="absolute inset-0 bg-grid-pattern bg-grid opacity-5" />
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] animate-pulse-glow" />
           <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-info/20 rounded-full blur-[100px]" />
-          
+
           <div className="container relative mx-auto px-6 pt-20 pb-20">
             <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
               {/* Badge */}
@@ -131,26 +141,31 @@ const Index = () => {
                   AI-Powered Solutions Architect
                 </span>
               </div>
-              
+
               {/* Headline */}
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
                 Design. Compare.{" "}
                 <span className="gradient-text">Optimize.</span>
               </h1>
-              
+
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mb-10 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-                The AI Solutions Architect that designs production-ready cloud architectures with real-time pricing intelligence across AWS, Azure, GCP, and OCI.
+                Your professional AI-based Solutions Architect for everything - from small-scale apps to enterprise systems. SolsArch is here for you.
               </p>
-              
-              {/* CTA Button */}
+
+              {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-                <Button onClick={handleStartDesign} variant="hero" size="xl" className="gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  Start Designing
+                <Button onClick={() => handleStartDesign('wizard')} variant="hero" size="xl" className="gap-2">
+                  <Wand2 className="w-5 h-5" />
+                  Guided Wizard
                   <ArrowRight className="w-5 h-5" />
                 </Button>
+                <Button onClick={() => handleStartDesign('chat')} variant="outline" size="xl" className="gap-2 border-primary/50 hover:bg-primary/10">
+                  <MessageSquare className="w-5 h-5" />
+                  Chat with AI
+                  <Sparkles className="w-5 h-5" />
+                </Button>
               </div>
-              
+
               {/* Feature cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
                 <FeatureCard
@@ -213,21 +228,28 @@ const Index = () => {
         </main>
       )}
 
+      {/* Chat View */}
+      {viewMode === 'chat' && (
+        <main className="container mx-auto px-4 py-8">
+          <ChatInterface onArchitectureGenerated={handleChatArchitectureGenerated} />
+        </main>
+      )}
+
       {/* Results View */}
       {viewMode === 'results' && result && (
         <main className="container mx-auto px-4 py-8">
           <div className="space-y-8 animate-fade-in">
-            <ArchitectureView 
+            <ArchitectureView
               architectures={result.architectures}
               selectedVariant={selectedVariant}
               onVariantChange={setSelectedVariant}
             />
-            
+
             <div className="grid lg:grid-cols-2 gap-8">
-              <CostComparison 
-                architecture={result.architectures[selectedVariant]} 
+              <CostComparison
+                architecture={result.architectures[selectedVariant]}
               />
-              <ArchitectureDiagram 
+              <ArchitectureDiagram
                 diagram={result.mermaidDiagram}
                 variant={result.architectures[selectedVariant].variant}
               />
@@ -241,15 +263,15 @@ const Index = () => {
                 <TabsTrigger value="resources">Resource Intelligence</TabsTrigger>
                 <TabsTrigger value="observability">Observability</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="optimizations" className="mt-6">
                 <OneClickOptimizations />
               </TabsContent>
-              
+
               <TabsContent value="bill" className="mt-6">
                 <CloudBillAnalyzer />
               </TabsContent>
-              
+
               <TabsContent value="resources" className="mt-6 space-y-8">
                 <div className="grid lg:grid-cols-2 gap-8">
                   <ResourceRightsizing />
@@ -260,7 +282,7 @@ const Index = () => {
                   <SpotOptimization />
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="observability" className="mt-6">
                 <ObservabilityPanel />
               </TabsContent>

@@ -1,73 +1,130 @@
-# Welcome to your Lovable project
+# SolsArch - AI Solutions Architect
 
-## Project info
+**SolsArch** is your professional AI-based Solutions Architect tool for designing production-ready cloud architectures. Whether you're building a small-scale app or an enterprise system, SolsArch provides intelligent architecture recommendations with real-time cost comparisons across AWS, Azure, GCP, and OCI.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- 🎯 **Dual Input Modes**: Choose between a guided wizard or conversational chat interface
+- 🤖 **AI-Powered Architecture Generation**: Get 3 architecture variants (cost-optimized, balanced, performance-optimized)
+- 💰 **Multi-Cloud Cost Comparison**: Real-time pricing across AWS, Azure, GCP, and OCI
+- 🎨 **Visual Architecture Diagrams**: Auto-generated Mermaid diagrams
+- 📊 **GPU Optimization**: Specialized recommendations for AI/ML workloads
+- 🔒 **Compliance Support**: SOC2, GDPR, HIPAA, PCI-DSS, ISO 27001, DPDP
+- 📈 **Cost Optimization Tools**: Resource rightsizing, spot optimization, bill analyzer
+- 🌍 **Multi-Region Support**: Deploy across global regions with latency optimization
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend**: React + TypeScript + Vite
+- **UI**: shadcn/ui + Tailwind CSS
+- **Backend**: Supabase Edge Functions
+- **AI**: Google Gemini API
+- **Deployment**: Vercel
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js 18+ and npm
+- Supabase account
+- Google Gemini API key
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to the project directory
+cd solsarch1
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Set up environment variables
+# Create a .env file with:
+# VITE_SUPABASE_URL=your_supabase_url
+# VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_key
+# VITE_SUPABASE_PROJECT_ID=your_project_id
+
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Supabase Setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Create a new Supabase project
+2. Run the SQL migrations from `supabase/migrations/` in your Supabase SQL editor
+3. Deploy the Edge Function:
+   ```sh
+   supabase functions deploy generate-architecture
+   ```
+4. Add the `GEMINI_API_KEY` secret to your Supabase project:
+   ```sh
+   supabase secrets set GEMINI_API_KEY=your_gemini_api_key
+   ```
 
-**Use GitHub Codespaces**
+## Deployment to Vercel
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+# Install Vercel CLI
+npm i -g vercel
 
-## What technologies are used for this project?
+# Deploy
+vercel
 
-This project is built with:
+# Add environment variables in Vercel dashboard:
+# - VITE_SUPABASE_URL
+# - VITE_SUPABASE_PUBLISHABLE_KEY
+# - VITE_SUPABASE_PROJECT_ID
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Usage
 
-## How can I deploy this project?
+### Wizard Mode
+1. Click "Start Designing" on the landing page
+2. Follow the 4-step wizard to define your requirements
+3. Get 3 architecture variants with cost comparisons
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Chat Mode
+1. Switch to Chat mode from the header
+2. Paste your requirements or upload a document
+3. Get instant architecture recommendations
 
-## Can I connect a custom domain to my Lovable project?
+## Project Structure
 
-Yes, you can!
+```
+solsarch1/
+├── src/
+│   ├── components/
+│   │   ├── app/          # Main application components
+│   │   ├── landing/      # Landing page components
+│   │   └── ui/           # shadcn/ui components
+│   ├── pages/            # Page components
+│   ├── types/            # TypeScript types
+│   └── integrations/     # Supabase integration
+├── supabase/
+│   ├── functions/        # Edge Functions
+│   └── migrations/       # Database migrations
+└── public/               # Static assets
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Contributing
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+SolsArch is designed to be extensible. Feel free to:
+- Add new cloud providers
+- Enhance cost calculation algorithms
+- Improve AI prompts for better recommendations
+- Add new compliance frameworks
+
+## License
+
+MIT License - feel free to use for your projects!
+
+## Support
+
+For issues or questions, please open an issue on GitHub.
+
+---
+
+**Built with ❤️ for cloud architects and developers**
