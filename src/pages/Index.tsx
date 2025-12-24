@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { AppHeader } from '@/components/app/AppHeader';
 import { RequirementsWizard } from '@/components/app/RequirementsWizard';
 import { ArchitectureView } from '@/components/app/ArchitectureView';
@@ -18,7 +20,7 @@ import { CloudBillAnalyzer } from '@/components/app/CloudBillAnalyzer';
 import { OneClickOptimizations } from '@/components/app/OneClickOptimizations';
 import { ArchitectChat } from '@/components/chat/ArchitectChat';
 import { Requirements, ArchitectureResult } from '@/types/architecture';
-import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText, MessageSquare, ListChecks } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight, Cloud, Cpu, DollarSign, Zap, BarChart3, Shield, Globe, Activity, Server, FileText, MessageSquare, ListChecks, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,6 +34,8 @@ const Index = () => {
   const [result, setResult] = useState<ArchitectureResult | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<number>(1);
   const { toast } = useToast();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   const handleGenerate = async (reqs: Requirements) => {
     setRequirements(reqs);
@@ -95,10 +99,28 @@ const Index = () => {
   };
 
   const handleStartWizard = () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to use the architecture wizard.",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
     setViewMode('wizard');
   };
 
   const handleStartChat = () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to chat with the AI architect.",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
     setViewMode('chat');
   };
 
@@ -144,87 +166,102 @@ const Index = () => {
         <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden">
           {/* Background effects */}
           <div className="absolute inset-0 bg-grid-pattern bg-grid opacity-5" />
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] animate-pulse-glow" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-info/20 rounded-full blur-[100px]" />
+          <div className="absolute top-1/4 left-1/4 w-64 md:w-96 h-64 md:h-96 bg-primary/20 rounded-full blur-[128px] animate-pulse-glow" />
+          <div className="absolute bottom-1/4 right-1/4 w-48 md:w-80 h-48 md:h-80 bg-info/20 rounded-full blur-[100px]" />
           
-          <div className="container relative mx-auto px-6 pt-20 pb-20">
+          <div className="container relative mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-16 sm:pb-20">
             <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/80 border border-border/50 backdrop-blur-sm mb-8 animate-fade-in">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-secondary/80 border border-border/50 backdrop-blur-sm mb-6 sm:mb-8 animate-fade-in">
                 <Zap className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-muted-foreground">
+                <span className="text-xs sm:text-sm font-medium text-muted-foreground">
                   AI-Powered Solutions Architect
                 </span>
               </div>
               
               {/* Headline */}
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold tracking-tight mb-4 sm:mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
                 Design. Compare.{" "}
                 <span className="gradient-text">Optimize.</span>
               </h1>
               
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mb-10 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-                The AI Solutions Architect that designs production-ready cloud architectures with real-time pricing intelligence across AWS, Azure, GCP, and OCI.
+              <p className="text-base sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mb-6 sm:mb-10 px-2 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+                The AI Solutions Architect that designs production-ready cloud architectures with real-time pricing intelligence.
               </p>
               
               {/* CTA Buttons - Dual Mode */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-                <Button onClick={handleStartChat} variant="hero" size="xl" className="gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  Chat with AI Architect
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-                <Button onClick={handleStartWizard} variant="outline" size="xl" className="gap-2 border-primary/50 text-primary hover:bg-primary/10">
-                  <ListChecks className="w-5 h-5" />
-                  Guided Wizard
-                </Button>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10 sm:mb-16 w-full sm:w-auto animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+                {user ? (
+                  <>
+                    <Button onClick={handleStartChat} variant="hero" size="lg" className="gap-2 w-full sm:w-auto">
+                      <MessageSquare className="w-5 h-5" />
+                      Chat with AI Architect
+                      <ArrowRight className="w-5 h-5 hidden sm:block" />
+                    </Button>
+                    <Button onClick={handleStartWizard} variant="outline" size="lg" className="gap-2 border-primary/50 text-primary hover:bg-primary/10 w-full sm:w-auto">
+                      <ListChecks className="w-5 h-5" />
+                      Guided Wizard
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button onClick={() => navigate('/auth')} variant="hero" size="lg" className="gap-2 w-full sm:w-auto">
+                      <LogIn className="w-5 h-5" />
+                      Get Started Free
+                      <ArrowRight className="w-5 h-5 hidden sm:block" />
+                    </Button>
+                    <Button onClick={() => navigate('/auth')} variant="outline" size="lg" className="gap-2 border-primary/50 text-primary hover:bg-primary/10 w-full sm:w-auto">
+                      Sign In
+                    </Button>
+                  </>
+                )}
               </div>
               
               {/* Feature cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 w-full animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
                 <FeatureCard
-                  icon={<Cloud className="w-6 h-6" />}
+                  icon={<Cloud className="w-5 sm:w-6 h-5 sm:h-6" />}
                   title="Multi-Cloud Architecture"
                   description="Design for AWS, Azure, GCP, OCI with provider-specific optimizations"
                 />
                 <FeatureCard
-                  icon={<DollarSign className="w-6 h-6" />}
+                  icon={<DollarSign className="w-5 sm:w-6 h-5 sm:h-6" />}
                   title="Live Cost Intelligence"
                   description="Real-time pricing comparison across all major cloud providers"
                 />
                 <FeatureCard
-                  icon={<Cpu className="w-6 h-6" />}
+                  icon={<Cpu className="w-5 sm:w-6 h-5 sm:h-6" />}
                   title="GPU Price-Performance"
                   description="Compare A100, H100, L40, T4 costs per TFLOP across providers"
                 />
               </div>
 
               {/* ScaleOps-inspired features */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-8 animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full mt-6 sm:mt-8 animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
                 <FeatureCard
-                  icon={<Activity className="w-5 h-5" />}
+                  icon={<Activity className="w-4 sm:w-5 h-4 sm:h-5" />}
                   title="Resource Rightsizing"
                   description="Auto-optimize CPU & memory based on actual usage"
                 />
                 <FeatureCard
-                  icon={<Zap className="w-5 h-5" />}
+                  icon={<Zap className="w-4 sm:w-5 h-4 sm:h-5" />}
                   title="Spot Optimization"
                   description="Save up to 70% with intelligent Spot placement"
                 />
                 <FeatureCard
-                  icon={<Server className="w-5 h-5" />}
+                  icon={<Server className="w-4 sm:w-5 h-4 sm:h-5" />}
                   title="GPU Workload Tuning"
                   description="Maximize GPU utilization with MIG-aware partitioning"
                 />
                 <FeatureCard
-                  icon={<FileText className="w-5 h-5" />}
+                  icon={<FileText className="w-4 sm:w-5 h-4 sm:h-5" />}
                   title="Bill Analyzer"
                   description="Upload your cloud bill and find savings instantly"
                 />
               </div>
 
               {/* Additional features */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-6 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full mt-4 sm:mt-6 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
                 <SmallFeature icon={<BarChart3 className="w-4 h-4" />} text="Cost Optimization" />
                 <SmallFeature icon={<Shield className="w-4 h-4" />} text="Security Best Practices" />
                 <SmallFeature icon={<Globe className="w-4 h-4" />} text="Multi-Region Support" />
@@ -244,14 +281,14 @@ const Index = () => {
 
       {/* Wizard View */}
       {viewMode === 'wizard' && (
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
           <RequirementsWizard onSubmit={handleGenerate} isLoading={isGenerating} />
         </main>
       )}
 
       {/* Results View */}
       {viewMode === 'results' && result && (
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
           <div className="space-y-8 animate-fade-in">
             <ArchitectureView 
               architectures={result.architectures}
@@ -259,7 +296,7 @@ const Index = () => {
               onVariantChange={setSelectedVariant}
             />
             
-            <div className="grid lg:grid-cols-2 gap-8">
+            <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
               <CostComparison 
                 architecture={result.architectures[selectedVariant]} 
               />
@@ -271,38 +308,38 @@ const Index = () => {
 
             {/* Tabbed optimization sections */}
             <Tabs defaultValue="optimizations" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="optimizations">One-Click Optimizations</TabsTrigger>
-                <TabsTrigger value="bill">Bill Analyzer</TabsTrigger>
-                <TabsTrigger value="resources">Resource Intelligence</TabsTrigger>
-                <TabsTrigger value="observability">Observability</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+                <TabsTrigger value="optimizations" className="text-xs sm:text-sm py-2">Optimizations</TabsTrigger>
+                <TabsTrigger value="bill" className="text-xs sm:text-sm py-2">Bill Analyzer</TabsTrigger>
+                <TabsTrigger value="resources" className="text-xs sm:text-sm py-2">Resources</TabsTrigger>
+                <TabsTrigger value="observability" className="text-xs sm:text-sm py-2">Observability</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="optimizations" className="mt-6">
+              <TabsContent value="optimizations" className="mt-4 sm:mt-6">
                 <OneClickOptimizations />
               </TabsContent>
               
-              <TabsContent value="bill" className="mt-6">
+              <TabsContent value="bill" className="mt-4 sm:mt-6">
                 <CloudBillAnalyzer />
               </TabsContent>
               
-              <TabsContent value="resources" className="mt-6 space-y-8">
-                <div className="grid lg:grid-cols-2 gap-8">
+              <TabsContent value="resources" className="mt-4 sm:mt-6 space-y-4 sm:space-y-8">
+                <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
                   <ResourceRightsizing />
                   <GPUOptimization />
                 </div>
-                <div className="grid lg:grid-cols-2 gap-8">
+                <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
                   <CostBreakdown />
                   <SpotOptimization />
                 </div>
               </TabsContent>
               
-              <TabsContent value="observability" className="mt-6">
+              <TabsContent value="observability" className="mt-4 sm:mt-6">
                 <ObservabilityPanel />
               </TabsContent>
             </Tabs>
 
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-4 sm:gap-8">
               <div className="lg:col-span-2">
                 <GPUDashboard />
               </div>
@@ -327,23 +364,23 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="group relative p-6 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/50 hover:bg-card/80 transition-all duration-300">
+    <div className="group relative p-4 sm:p-6 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/50 hover:bg-card/80 transition-all duration-300">
       <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="relative">
-        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/20 transition-colors">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-3 sm:mb-4 group-hover:bg-primary/20 transition-colors">
           {icon}
         </div>
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">{title}</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground">{description}</p>
       </div>
     </div>
   );
 }
 
 const SmallFeature = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
-  <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30 border border-border/30">
-    <div className="text-primary">{icon}</div>
-    <span className="text-sm text-muted-foreground">{text}</span>
+  <div className="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-secondary/30 border border-border/30">
+    <div className="text-primary flex-shrink-0">{icon}</div>
+    <span className="text-xs sm:text-sm text-muted-foreground truncate">{text}</span>
   </div>
 );
 
