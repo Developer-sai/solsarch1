@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Cloud, ArrowLeft, User, Building, Briefcase, Save, Loader2 } from "lucide-react";
+import { Cloud, ArrowLeft, User, Building, Briefcase, Save, Loader2, Shield, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 
 interface Profile {
   id: string;
@@ -16,6 +17,7 @@ interface Profile {
   company: string | null;
   role: string | null;
   avatar_url: string | null;
+  created_at: string;
 }
 
 export default function ProfilePage() {
@@ -38,11 +40,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) {
-      fetchProfile();
+      fetchOrCreateProfile();
     }
   }, [user]);
 
-  const fetchProfile = async () => {
+  const fetchOrCreateProfile = async () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -59,9 +61,29 @@ export default function ProfilePage() {
           company: data.company || "",
           role: data.role || ""
         });
+      } else {
+        // Create profile if it doesn't exist
+        const { data: newProfile, error: createError } = await supabase
+          .from("profiles")
+          .insert({
+            user_id: user!.id,
+            full_name: user!.user_metadata?.full_name || ""
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+
+        setProfile(newProfile);
+        setFormData({
+          full_name: newProfile.full_name || "",
+          company: newProfile.company || "",
+          role: newProfile.role || ""
+        });
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("Error fetching/creating profile:", error);
+      toast.error("Failed to load profile");
     } finally {
       setLoading(false);
     }
@@ -211,10 +233,49 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
+          {/* Account Info */}
+          <Card className="bg-card/80 backdrop-blur-sm mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Account Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 border border-border">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Member since</p>
+                    <p className="text-sm text-muted-foreground">
+                      {profile?.created_at 
+                        ? formatDistanceToNow(new Date(profile.created_at), { addSuffix: true })
+                        : 'Recently joined'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 border border-border">
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Account Status</p>
+                    <p className="text-sm text-muted-foreground">Active</p>
+                  </div>
+                </div>
+                <span className="px-2 py-1 text-xs font-medium bg-success/20 text-success rounded-full">
+                  Verified
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Account Actions */}
           <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>Account</CardTitle>
+              <CardTitle>Account Actions</CardTitle>
               <CardDescription>Manage your account settings</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

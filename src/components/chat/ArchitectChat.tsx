@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
-import { Bot, Sparkles, ArrowDown, Save } from 'lucide-react';
+import { Bot, Sparkles, ArrowDown, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -53,8 +53,10 @@ What would you like to build?`;
 
 export const ArchitectChat = ({ onArchitectureGenerated }: ArchitectChatProps) => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationTitle, setConversationTitle] = useState<string>('New Conversation');
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -64,6 +66,8 @@ export const ArchitectChat = ({ onArchitectureGenerated }: ArchitectChatProps) =
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingConversation, setIsLoadingConversation] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -72,6 +76,193 @@ export const ArchitectChat = ({ onArchitectureGenerated }: ArchitectChatProps) =
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+
+  // Load existing conversation if ID is provided
+  useEffect(() => {
+    const conversationParam = searchParams.get('conversation');
+    if (conversationParam && user) {
+      loadConversation(conversationParam);
+    }
+  }, [searchParams, user]);
+
+  const loadConversation = async (id: string) => {
+    setIsLoadingConversation(true);
+    try {
+      // Load conversation details
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (convError) throw convError;
+
+      // Load messages
+      const { data: messagesData, error: msgError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', id)
+        .order('created_at', { ascending: true });
+
+      if (msgError) throw msgError;
+
+      setConversationId(id);
+      setConversationTitle(conversation.title);
+      
+      // Convert to our message format
+      const loadedMessages: Message[] = messagesData.map(m => ({
+        id: m.id,
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        timestamp: new Date(m.created_at)
+      }));
+
+      // Add welcome message at the beginning if not already there
+      if (loadedMessages.length > 0 && loadedMessages[0].role !== 'assistant') {
+        setMessages([
+          {
+            id: 'welcome',
+            role: 'assistant',
+            content: WELCOME_MESSAGE,
+            timestamp: new Date()
+          },
+          ...loadedMessages
+        ]);
+      } else if (loadedMessages.length === 0) {
+        setMessages([
+          {
+            id: 'welcome',
+            role: 'assistant',
+            content: WELCOME_MESSAGE,
+            timestamp: new Date()
+          }
+        ]);
+      } else {
+        setMessages(loadedMessages);
+      }
+
+      toast({
+        title: "Conversation loaded",
+        description: `Continuing "${conversation.title}"`,
+      });
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load conversation",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingConversation(false);
+    }
+  };
+
+  const saveConversation = async () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save conversations",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Filter out welcome message for saving
+    const messagesToSave = messages.filter(m => m.id !== 'welcome');
+    
+    if (messagesToSave.length < 2) {
+      toast({
+        title: "Nothing to save",
+        description: "Have a conversation first before saving",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Generate title from first user message
+      const firstUserMessage = messagesToSave.find(m => m.role === 'user');
+      const title = firstUserMessage 
+        ? firstUserMessage.content.slice(0, 100) + (firstUserMessage.content.length > 100 ? '...' : '')
+        : 'New Conversation';
+
+      if (conversationId) {
+        // Update existing conversation
+        await supabase
+          .from('conversations')
+          .update({ title, updated_at: new Date().toISOString() })
+          .eq('id', conversationId);
+
+        // Delete old messages and insert new ones
+        await supabase
+          .from('messages')
+          .delete()
+          .eq('conversation_id', conversationId);
+
+        const { error: msgError } = await supabase
+          .from('messages')
+          .insert(
+            messagesToSave.map(m => ({
+              conversation_id: conversationId,
+              role: m.role,
+              content: m.content,
+              created_at: m.timestamp.toISOString()
+            }))
+          );
+
+        if (msgError) throw msgError;
+
+        toast({
+          title: "Conversation updated",
+          description: "Your changes have been saved",
+        });
+      } else {
+        // Create new conversation
+        const { data: newConv, error: convError } = await supabase
+          .from('conversations')
+          .insert({
+            user_id: user.id,
+            title
+          })
+          .select()
+          .single();
+
+        if (convError) throw convError;
+
+        // Insert messages
+        const { error: msgError } = await supabase
+          .from('messages')
+          .insert(
+            messagesToSave.map(m => ({
+              conversation_id: newConv.id,
+              role: m.role,
+              content: m.content,
+              created_at: m.timestamp.toISOString()
+            }))
+          );
+
+        if (msgError) throw msgError;
+
+        setConversationId(newConv.id);
+        setConversationTitle(title);
+
+        toast({
+          title: "Conversation saved",
+          description: "You can continue this conversation later from Chat History",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save conversation",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -250,6 +441,16 @@ export const ArchitectChat = ({ onArchitectureGenerated }: ArchitectChatProps) =
   };
 
   const hasEnoughContext = messages.length >= 3; // Welcome + at least one exchange
+  const canSave = user && messages.filter(m => m.id !== 'welcome').length >= 2;
+
+  if (isLoadingConversation) {
+    return (
+      <div className="flex flex-col h-full bg-background items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Loading conversation...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -259,22 +460,44 @@ export const ArchitectChat = ({ onArchitectureGenerated }: ArchitectChatProps) =
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/30 to-info/30 flex items-center justify-center">
             <Bot className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <h2 className="font-semibold text-foreground">SolsArch AI</h2>
-            <p className="text-xs text-muted-foreground">Solutions Architect Assistant</p>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-foreground truncate">
+              {conversationId ? conversationTitle : 'SolsArch AI'}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {conversationId ? 'Saved conversation' : 'Solutions Architect Assistant'}
+            </p>
           </div>
-          {hasEnoughContext && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="ml-auto gap-2 border-primary/50 text-primary hover:bg-primary/10"
-              onClick={handleGenerate}
-              disabled={isLoading}
-            >
-              <Sparkles className="w-4 h-4" />
-              Generate Architecture
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {canSave && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2"
+                onClick={saveConversation}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                {conversationId ? 'Update' : 'Save'}
+              </Button>
+            )}
+            {hasEnoughContext && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                onClick={handleGenerate}
+                disabled={isLoading}
+              >
+                <Sparkles className="w-4 h-4" />
+                Generate
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
