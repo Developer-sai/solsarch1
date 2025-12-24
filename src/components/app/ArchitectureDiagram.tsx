@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Network, RefreshCw, Maximize2 } from 'lucide-react';
+import { Network, RefreshCw, Maximize2, Download, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import mermaid from 'mermaid';
 import {
@@ -11,61 +11,94 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface ArchitectureDiagramProps {
   diagram: string;
   variant: string;
+  className?: string;
 }
 
-// Default diagram to use if provided diagram fails
-const DEFAULT_DIAGRAM = `graph TD
-    LB[Load Balancer] --> WS1[Web Server 1]
-    LB --> WS2[Web Server 2]
-    WS1 --> API[API Gateway]
-    WS2 --> API
-    API --> APP1[App Server 1]
-    API --> APP2[App Server 2]
-    APP1 --> CACHE[(Redis Cache)]
-    APP2 --> CACHE
-    APP1 --> DB[(Primary Database)]
-    APP2 --> DB
-    DB --> REPLICA[(Read Replica)]
-    APP1 --> QUEUE[Message Queue]
-    APP2 --> QUEUE
-    QUEUE --> WORKER[Background Workers]
-    WORKER --> STORAGE[(Object Storage)]
-    CDN[CDN] --> LB`;
+// Professional default diagram
+const DEFAULT_DIAGRAM = `graph TB
+    subgraph "Client Layer"
+        CDN[CDN / Edge Network]
+        LB[Load Balancer]
+    end
+    
+    subgraph "Application Layer"
+        API[API Gateway]
+        WEB[Web Servers]
+        APP[Application Servers]
+    end
+    
+    subgraph "Service Layer"
+        AUTH[Auth Service]
+        CACHE[(Redis Cache)]
+        QUEUE[Message Queue]
+        SEARCH[Search Engine]
+    end
+    
+    subgraph "Data Layer"
+        DB[(Primary Database)]
+        REPLICA[(Read Replicas)]
+        STORAGE[(Object Storage)]
+    end
+    
+    subgraph "Background Processing"
+        WORKER[Workers]
+        SCHEDULER[Job Scheduler]
+    end
+    
+    CDN --> LB
+    LB --> API
+    API --> WEB
+    WEB --> APP
+    APP --> AUTH
+    APP --> CACHE
+    APP --> QUEUE
+    APP --> SEARCH
+    APP --> DB
+    DB --> REPLICA
+    QUEUE --> WORKER
+    WORKER --> STORAGE
+    SCHEDULER --> QUEUE`;
 
-// Initialize mermaid once at module level
-let mermaidInitialized = false;
+// Professional theme configuration
 const initMermaid = () => {
-  if (mermaidInitialized) return;
   mermaid.initialize({
     startOnLoad: false,
-    theme: 'dark',
+    theme: 'base',
     themeVariables: {
-      primaryColor: '#6366f1',
-      primaryTextColor: '#ffffff',
-      primaryBorderColor: '#818cf8',
-      lineColor: '#a5b4fc',
-      secondaryColor: '#1e1b4b',
+      // Professional dark theme with cyan accents
+      primaryColor: '#0d3b4c',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#22d3ee',
+      lineColor: '#64748b',
+      secondaryColor: '#1e293b',
       tertiaryColor: '#0f172a',
       background: '#0f172a',
-      mainBkg: '#1e1b4b',
-      nodeBorder: '#818cf8',
-      clusterBkg: '#1e1b4b',
-      titleColor: '#ffffff',
-      edgeLabelBackground: '#1e1b4b',
+      mainBkg: '#1e293b',
+      nodeBorder: '#334155',
+      clusterBkg: '#1e293b',
+      clusterBorder: '#334155',
+      titleColor: '#f1f5f9',
+      edgeLabelBackground: '#1e293b',
+      textColor: '#e2e8f0',
+      // Subgraph styling
+      nodeTextColor: '#e2e8f0',
     },
     flowchart: {
       useMaxWidth: true,
       htmlLabels: true,
       curve: 'basis',
-      padding: 20,
+      padding: 30,
+      nodeSpacing: 50,
+      rankSpacing: 70,
+      diagramPadding: 20,
     },
     securityLevel: 'loose',
   });
-  mermaidInitialized = true;
 };
 
 const cleanDiagramString = (diagramStr: string): string => {
@@ -73,7 +106,6 @@ const cleanDiagramString = (diagramStr: string): string => {
     return DEFAULT_DIAGRAM;
   }
   
-  // Clean up the diagram string - handle various escape patterns
   let cleaned = diagramStr
     .replace(/\\\\n/g, '\n')
     .replace(/\\n/g, '\n')
@@ -82,27 +114,59 @@ const cleanDiagramString = (diagramStr: string): string => {
     .replace(/\\t/g, '  ')
     .trim();
   
-  // Replace semicolons that are used as line separators with newlines
-  // But only if the line doesn't start with graph/flowchart declaration
   if (cleaned.includes(';') && !cleaned.includes('\n')) {
     cleaned = cleaned.replace(/;\s*/g, '\n    ');
   }
   
-  // Ensure it starts with a valid graph declaration
-  if (!cleaned.match(/^(graph|flowchart|sequenceDiagram|classDiagram)/i)) {
+  if (!cleaned.match(/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitGraph)/i)) {
     cleaned = 'graph TD\n    ' + cleaned;
   }
   
   return cleaned;
 };
 
-export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramProps) => {
+const DiagramControls = memo(({ 
+  zoom, 
+  onZoomIn, 
+  onZoomOut, 
+  onReset,
+  onDownload 
+}: { 
+  zoom: number; 
+  onZoomIn: () => void; 
+  onZoomOut: () => void; 
+  onReset: () => void;
+  onDownload: () => void;
+}) => (
+  <div className="absolute top-4 right-4 flex items-center gap-1 bg-secondary/90 backdrop-blur-sm rounded-lg border border-border p-1 z-10">
+    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onZoomOut} disabled={zoom <= 0.5}>
+      <ZoomOut className="w-4 h-4" />
+    </Button>
+    <span className="text-xs font-mono w-12 text-center text-muted-foreground">{Math.round(zoom * 100)}%</span>
+    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onZoomIn} disabled={zoom >= 2}>
+      <ZoomIn className="w-4 h-4" />
+    </Button>
+    <div className="w-px h-6 bg-border mx-1" />
+    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onReset}>
+      <RotateCcw className="w-4 h-4" />
+    </Button>
+    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDownload}>
+      <Download className="w-4 h-4" />
+    </Button>
+  </div>
+));
+
+DiagramControls.displayName = 'DiagramControls';
+
+export const ArchitectureDiagram = memo(({ diagram, variant, className }: ArchitectureDiagramProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const fullscreenContainerRef = useRef<HTMLDivElement>(null);
   const [isRendered, setIsRendered] = useState(false);
   const [renderError, setRenderError] = useState(false);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [svgContent, setSvgContent] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const renderAttemptRef = useRef(0);
 
   const renderDiagram = useCallback(async (diagramStr: string): Promise<{ success: boolean; svg?: string }> => {
@@ -115,15 +179,14 @@ export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramPro
       const { svg } = await mermaid.render(id, cleanDiagram);
       return { success: true, svg };
     } catch (error) {
-      console.error('Mermaid rendering error with provided diagram:', error);
+      console.error('Mermaid rendering error:', error);
       
-      // Try with default diagram
       try {
         const id = `mermaid-fallback-${variant}-${Date.now()}-${renderAttemptRef.current++}`;
         const { svg } = await mermaid.render(id, DEFAULT_DIAGRAM);
         return { success: true, svg };
       } catch (fallbackError) {
-        console.error('Fallback diagram also failed:', fallbackError);
+        console.error('Fallback diagram failed:', fallbackError);
         return { success: false };
       }
     }
@@ -156,7 +219,6 @@ export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramPro
     };
   }, [diagram, renderDiagram]);
 
-  // Apply SVG to container when content changes
   useEffect(() => {
     if (containerRef.current && svgContent) {
       containerRef.current.innerHTML = svgContent;
@@ -164,12 +226,14 @@ export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramPro
       if (svgElement) {
         svgElement.style.maxWidth = '100%';
         svgElement.style.height = 'auto';
-        svgElement.style.minHeight = '200px';
+        svgElement.style.minHeight = '300px';
+        svgElement.style.transform = `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`;
+        svgElement.style.transformOrigin = 'center center';
+        svgElement.style.transition = 'transform 0.2s ease-out';
       }
     }
-  }, [svgContent]);
+  }, [svgContent, zoom, pan]);
 
-  // Apply SVG to fullscreen container
   useEffect(() => {
     if (isFullscreenOpen && fullscreenContainerRef.current && svgContent) {
       fullscreenContainerRef.current.innerHTML = svgContent;
@@ -177,7 +241,7 @@ export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramPro
       if (svgElement) {
         svgElement.style.maxWidth = '100%';
         svgElement.style.height = 'auto';
-        svgElement.style.minHeight = '400px';
+        svgElement.style.minHeight = '500px';
       }
     }
   }, [isFullscreenOpen, svgContent]);
@@ -197,58 +261,94 @@ export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramPro
     }
   };
 
+  const handleDownload = () => {
+    if (!svgContent) return;
+    
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `architecture-${variant}-${Date.now()}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <Card className="border-border bg-card">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
+    <Card className={cn("border-border bg-card overflow-hidden", className)}>
+      <CardHeader className="flex flex-row items-center justify-between py-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
           <Network className="w-5 h-5 text-primary" />
           Architecture Diagram
         </CardTitle>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs">
-            Auto-generated
+          <Badge variant="outline" className="text-xs font-normal">
+            {variant}
           </Badge>
           {renderError && (
-            <Button variant="ghost" size="sm" onClick={handleRetry}>
-              <RefreshCw className="w-4 h-4" />
+            <Button variant="ghost" size="sm" onClick={handleRetry} className="h-8">
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Retry
             </Button>
           )}
           <Dialog open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
                 <Maximize2 className="w-4 h-4" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+            <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-auto">
               <DialogHeader>
-                <DialogTitle>Architecture Diagram</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <Network className="w-5 h-5 text-primary" />
+                  Architecture Diagram — {variant}
+                </DialogTitle>
               </DialogHeader>
               <div 
                 ref={fullscreenContainerRef}
-                className="w-full min-h-[500px] bg-secondary/30 rounded-lg p-4 overflow-auto"
+                className="w-full min-h-[70vh] bg-secondary/30 rounded-lg p-6 overflow-auto"
               />
             </DialogContent>
           </Dialog>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative p-0">
+        {isRendered && (
+          <DiagramControls
+            zoom={zoom}
+            onZoomIn={() => setZoom(z => Math.min(z + 0.25, 2))}
+            onZoomOut={() => setZoom(z => Math.max(z - 0.25, 0.5))}
+            onReset={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+            onDownload={handleDownload}
+          />
+        )}
+        
         <div 
           ref={containerRef}
-          className="w-full min-h-[300px] bg-secondary/30 rounded-lg p-4 overflow-auto flex items-center justify-center"
+          className={cn(
+            "w-full min-h-[400px] bg-gradient-to-br from-secondary/50 to-secondary/20 overflow-auto",
+            "flex items-center justify-center p-6"
+          )}
         >
           {!isRendered && !renderError && (
-            <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-2">
-              <Network className="w-8 h-8 opacity-50 animate-pulse" />
+            <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-3">
+              <div className="relative">
+                <Network className="w-10 h-10 opacity-50" />
+                <div className="absolute inset-0 animate-ping opacity-30">
+                  <Network className="w-10 h-10" />
+                </div>
+              </div>
               <p className="text-sm">Rendering architecture diagram...</p>
             </div>
           )}
           {renderError && (
-            <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-2">
-              <Network className="w-8 h-8 opacity-50" />
-              <p className="text-sm">Using default architecture diagram</p>
-              <Button variant="outline" size="sm" onClick={handleRetry} className="mt-2">
+            <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-3">
+              <Network className="w-10 h-10 opacity-50" />
+              <p className="text-sm">Using fallback diagram</p>
+              <Button variant="outline" size="sm" onClick={handleRetry}>
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Retry
+                Retry Original
               </Button>
             </div>
           )}
@@ -256,4 +356,6 @@ export const ArchitectureDiagram = ({ diagram, variant }: ArchitectureDiagramPro
       </CardContent>
     </Card>
   );
-};
+});
+
+ArchitectureDiagram.displayName = 'ArchitectureDiagram';
