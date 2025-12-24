@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
-import { Bot, Sparkles, ArrowDown } from 'lucide-react';
+import { Bot, Sparkles, ArrowDown, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ArchitectureResult } from '@/types/architecture';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Message {
   id: string;
@@ -50,6 +52,9 @@ You can also **upload files** (requirements docs, mockups, existing code) or use
 What would you like to build?`;
 
 export const ArchitectChat = ({ onArchitectureGenerated }: ArchitectChatProps) => {
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
