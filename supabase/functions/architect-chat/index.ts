@@ -16,9 +16,10 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, mode } = await req.json() as { 
+    const { messages, mode, stream = true } = await req.json() as { 
       messages: ChatMessage[]; 
       mode: 'chat' | 'generate' | 'analyze';
+      stream?: boolean;
     };
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -162,8 +163,84 @@ When asked to generate a complete architecture JSON, respond with ONLY valid JSO
       });
     }
 
-    console.log("Calling Lovable AI Gateway for chat...");
+    console.log("Calling Lovable AI Gateway for chat... stream:", stream);
 
+    // For generate mode, we don't stream (need complete JSON)
+    if (mode === 'generate' || !stream) {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: apiMessages,
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("AI Gateway error:", response.status, errorText);
+        
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error(`AI Gateway error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error("No content in AI response");
+      }
+
+      // For generate mode, try to parse as JSON
+      if (mode === 'generate') {
+        try {
+          let cleanedContent = content
+            .replace(/```json\n?/g, '')
+            .replace(/```\n?/g, '')
+            .trim();
+          
+          const architectureResult = JSON.parse(cleanedContent);
+          return new Response(JSON.stringify({ 
+            type: 'architecture',
+            data: architectureResult 
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        } catch (parseError) {
+          console.error("JSON parse error:", parseError);
+          return new Response(JSON.stringify({ 
+            type: 'message',
+            content: content 
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      return new Response(JSON.stringify({ 
+        type: 'message',
+        content: content 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Streaming mode for chat
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -173,6 +250,7 @@ When asked to generate a complete architecture JSON, respond with ONLY valid JSO
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: apiMessages,
+        stream: true,
       }),
     });
 
@@ -195,46 +273,11 @@ When asked to generate a complete architecture JSON, respond with ONLY valid JSO
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-    
-    if (!content) {
-      throw new Error("No content in AI response");
-    }
-
-    // For generate mode, try to parse as JSON
-    if (mode === 'generate') {
-      try {
-        let cleanedContent = content
-          .replace(/```json\n?/g, '')
-          .replace(/```\n?/g, '')
-          .trim();
-        
-        const architectureResult = JSON.parse(cleanedContent);
-        return new Response(JSON.stringify({ 
-          type: 'architecture',
-          data: architectureResult 
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      } catch (parseError) {
-        console.error("JSON parse error:", parseError);
-        // Return as chat message if parsing fails
-        return new Response(JSON.stringify({ 
-          type: 'message',
-          content: content 
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
-
-    return new Response(JSON.stringify({ 
-      type: 'message',
-      content: content 
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Return the stream directly
+    return new Response(response.body, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
+
   } catch (error) {
     console.error("Error in architect-chat function:", error);
     return new Response(JSON.stringify({ 
