@@ -284,6 +284,15 @@ export default function AppChat() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
+    // Create placeholder assistant message for streaming
+    const assistantMessageId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date()
+    }]);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -294,6 +303,8 @@ export default function AppChat() {
           variant: "destructive"
         });
         setIsLoading(false);
+        // Remove the empty assistant message
+        setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
         return;
       }
 
@@ -310,7 +321,8 @@ export default function AppChat() {
               role: m.role,
               content: m.content
             })),
-            mode: 'chat'
+            mode: 'chat',
+            stream: true
           }),
         }
       );
@@ -320,27 +332,95 @@ export default function AppChat() {
         throw new Error(error.error || 'Failed to get response');
       }
 
-      const data = await response.json();
-      
-      // Parse for artifacts
-      const artifact = parseArtifact(data.content);
-      
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.content,
-        timestamp: new Date(),
-        artifact
-      };
+      if (!response.body) {
+        throw new Error('No response body');
+      }
 
-      setMessages(prev => [...prev, assistantMessage]);
-      
+      // Stream the response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullContent2 = '';
+      let textBuffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        textBuffer += decoder.decode(value, { stream: true });
+
+        // Process line-by-line for SSE
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const deltaContent = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (deltaContent) {
+              fullContent2 += deltaContent;
+              // Update the assistant message with new content
+              setMessages(prev => prev.map(m => 
+                m.id === assistantMessageId 
+                  ? { ...m, content: fullContent2 }
+                  : m
+              ));
+            }
+          } catch {
+            // Incomplete JSON, put it back and wait for more
+            textBuffer = line + '\n' + textBuffer;
+            break;
+          }
+        }
+      }
+
+      // Final flush of remaining buffer
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split('\n')) {
+          if (!raw) continue;
+          if (raw.endsWith('\r')) raw = raw.slice(0, -1);
+          if (raw.startsWith(':') || raw.trim() === '') continue;
+          if (!raw.startsWith('data: ')) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const deltaContent = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (deltaContent) {
+              fullContent2 += deltaContent;
+              setMessages(prev => prev.map(m => 
+                m.id === assistantMessageId 
+                  ? { ...m, content: fullContent2 }
+                  : m
+              ));
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      // Parse for artifacts after streaming is complete
+      const artifact = parseArtifact(fullContent2);
       if (artifact) {
+        setMessages(prev => prev.map(m => 
+          m.id === assistantMessageId 
+            ? { ...m, artifact }
+            : m
+        ));
         setCurrentArtifact(artifact);
         setShowArtifactPanel(true);
       }
+
     } catch (error) {
       console.error('Chat error:', error);
+      // Remove the empty assistant message on error
+      setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to get response",
