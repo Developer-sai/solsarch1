@@ -142,7 +142,7 @@ export default function AppChat() {
     }
   };
 
-  const saveConversation = async () => {
+  const saveConversation = async (customTitle?: string) => {
     if (!user) {
       toast({
         title: "Sign in required",
@@ -166,9 +166,15 @@ export default function AppChat() {
     setIsSaving(true);
     try {
       const firstUserMessage = messagesToSave.find(m => m.role === 'user');
-      const title = firstUserMessage 
-        ? firstUserMessage.content.slice(0, 100) + (firstUserMessage.content.length > 100 ? '...' : '')
-        : 'New Conversation';
+      // Generate a better title from user's first message
+      let title = customTitle;
+      if (!title && firstUserMessage) {
+        // Extract first meaningful sentence/phrase
+        const content = firstUserMessage.content.trim();
+        const firstLine = content.split('\n')[0];
+        title = firstLine.slice(0, 80) + (firstLine.length > 80 ? '...' : '');
+      }
+      title = title || 'Architecture Discussion';
 
       if (conversationId) {
         await supabase
@@ -549,7 +555,7 @@ export default function AppChat() {
                   variant="outline" 
                   size="sm" 
                   className="gap-1.5 h-8 text-xs"
-                  onClick={saveConversation}
+                  onClick={() => saveConversation()}
                   disabled={isSaving}
                 >
                   {isSaving ? (

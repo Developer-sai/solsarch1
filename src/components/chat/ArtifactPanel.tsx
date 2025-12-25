@@ -1,6 +1,7 @@
-import { X, Copy, Check, Download } from 'lucide-react';
+import { X, Copy, Check, Download, Edit2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect, useRef } from 'react';
 import type { ArtifactData } from '@/pages/app/AppChat';
 import mermaid from 'mermaid';
@@ -8,38 +9,96 @@ import mermaid from 'mermaid';
 interface ArtifactPanelProps {
   artifact: ArtifactData | null;
   onClose: () => void;
+  onUpdate?: (content: string) => void;
 }
 
-export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
+let mermaidInitialized = false;
+
+const initMermaid = () => {
+  if (mermaidInitialized) return;
+  try {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      securityLevel: 'loose',
+      suppressErrorRendering: true,
+    });
+    mermaidInitialized = true;
+  } catch (e) {
+    console.warn('Mermaid already initialized');
+  }
+};
+
+export function ArtifactPanel({ artifact, onClose, onUpdate }: ArtifactPanelProps) {
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
   const mermaidRef = useRef<HTMLDivElement>(null);
+  const renderIdRef = useRef(0);
 
   useEffect(() => {
-    if (artifact?.type === 'diagram' && mermaidRef.current) {
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: 'dark',
-        securityLevel: 'loose',
-      });
+    if (artifact?.type === 'diagram' && mermaidRef.current && !isEditing) {
+      initMermaid();
       
-      mermaid.render('mermaid-diagram', artifact.content).then(({ svg }) => {
+      const currentRenderId = ++renderIdRef.current;
+      const diagramId = `mermaid-panel-${currentRenderId}`;
+      
+      // Remove any existing element with this ID
+      const existing = document.getElementById(diagramId);
+      if (existing) {
+        existing.remove();
+      }
+      
+      mermaid.render(diagramId, artifact.content).then(({ svg }) => {
         if (mermaidRef.current) {
           mermaidRef.current.innerHTML = svg;
         }
       }).catch(err => {
-        console.error('Mermaid render error:', err);
+        console.warn('Mermaid render error:', err);
         if (mermaidRef.current) {
-          mermaidRef.current.innerHTML = `<pre class="text-xs text-muted-foreground">${artifact.content}</pre>`;
+          mermaidRef.current.innerHTML = `<pre class="text-xs text-muted-foreground p-4 bg-secondary/30 rounded-lg overflow-auto">${artifact.content}</pre>`;
         }
       });
     }
-  }, [artifact]);
+  }, [artifact, isEditing]);
 
   const handleCopy = async () => {
     if (!artifact) return;
     await navigator.clipboard.writeText(artifact.content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    if (!artifact) return;
+    const blob = new Blob([artifact.content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${artifact.title.toLowerCase().replace(/\s+/g, '-')}.${artifact.type === 'diagram' ? 'mmd' : 'md'}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const startEditing = () => {
+    if (artifact) {
+      setEditContent(artifact.content);
+      setIsEditing(true);
+    }
+  };
+
+  const saveEdit = () => {
+    if (onUpdate && editContent) {
+      onUpdate(editContent);
+    }
+    setIsEditing(false);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditContent('');
   };
 
   if (!artifact) {
@@ -62,19 +121,45 @@ export function ArtifactPanel({ artifact, onClose }: ArtifactPanelProps) {
           <p className="text-xs text-muted-foreground capitalize">{artifact.type}</p>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
-            {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </Button>
+          {isEditing ? (
+            <>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={saveEdit}>
+                <Save className="w-3 h-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={cancelEdit}>
+                <X className="w-3 h-3" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={startEditing}>
+                <Edit2 className="w-3 h-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDownload}>
+                <Download className="w-3 h-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+                <X className="w-4 h-4" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
       {/* Content */}
       <ScrollArea className="flex-1">
         <div className="p-4">
-          {artifact.type === 'diagram' ? (
+          {isEditing ? (
+            <Textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="min-h-[400px] font-mono text-xs"
+              placeholder="Edit content..."
+            />
+          ) : artifact.type === 'diagram' ? (
             <div 
               ref={mermaidRef} 
               className="bg-secondary/30 rounded-lg p-4 overflow-x-auto"
