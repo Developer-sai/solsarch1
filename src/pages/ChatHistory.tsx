@@ -4,9 +4,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Cloud, ArrowLeft, MessageSquare, Trash2, Clock, Loader2, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Cloud, ArrowLeft, MessageSquare, Trash2, Clock, Loader2, Plus, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Conversation {
   id: string;
@@ -21,6 +33,9 @@ export default function ChatHistory() {
   const [loading, setLoading] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -54,6 +69,15 @@ export default function ChatHistory() {
   const handleDelete = async (id: string) => {
     setDeleting(id);
     try {
+      // First delete all messages in the conversation
+      const { error: msgError } = await supabase
+        .from("messages")
+        .delete()
+        .eq("conversation_id", id);
+
+      if (msgError) throw msgError;
+
+      // Then delete the conversation
       const { error } = await supabase
         .from("conversations")
         .delete()
@@ -71,8 +95,46 @@ export default function ChatHistory() {
     }
   };
 
+  const handleRename = async (id: string) => {
+    if (!editTitle.trim()) {
+      toast.error("Title cannot be empty");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("conversations")
+        .update({ title: editTitle.trim(), updated_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setConversations(conversations.map(c => 
+        c.id === id ? { ...c, title: editTitle.trim(), updated_at: new Date().toISOString() } : c
+      ));
+      setEditingId(null);
+      toast.success("Conversation renamed");
+    } catch (error) {
+      console.error("Error renaming conversation:", error);
+      toast.error("Failed to rename conversation");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const startEditing = (conversation: Conversation) => {
+    setEditingId(conversation.id);
+    setEditTitle(conversation.title);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditTitle("");
+  };
+
   const handleContinue = (id: string) => {
-    navigate(`/?mode=chat&conversation=${id}`);
+    navigate(`/app/chat/${id}`);
   };
 
   if (authLoading || loading) {
@@ -116,8 +178,8 @@ export default function ChatHistory() {
               <h1 className="text-3xl font-bold">Chat History</h1>
               <p className="text-muted-foreground">Your saved architecture conversations</p>
             </div>
-            <Link to="/?mode=chat">
-              <Button variant="hero" className="gap-2">
+            <Link to="/app/chat">
+              <Button className="gap-2">
                 <Plus className="w-4 h-4" />
                 New Chat
               </Button>
@@ -130,8 +192,8 @@ export default function ChatHistory() {
                 <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">No conversations yet</h3>
                 <p className="text-muted-foreground mb-4">Start a new chat with the AI architect</p>
-                <Link to="/?mode=chat">
-                  <Button variant="hero">
+                <Link to="/app/chat">
+                  <Button>
                     <Plus className="w-4 h-4 mr-2" />
                     Start New Chat
                   </Button>
@@ -139,43 +201,108 @@ export default function ChatHistory() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {conversations.map((conversation) => (
                 <Card 
                   key={conversation.id} 
                   className="bg-card/50 hover:bg-card/80 transition-colors"
                 >
-                  <CardHeader className="pb-2">
+                  <CardHeader className="pb-2 py-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg truncate">{conversation.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-1">
-                          <Clock className="w-3 h-3" />
-                          {formatDistanceToNow(new Date(conversation.updated_at), { addSuffix: true })}
-                        </CardDescription>
+                        {editingId === conversation.id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              className="h-8 text-sm"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleRename(conversation.id);
+                                if (e.key === 'Escape') cancelEditing();
+                              }}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-primary"
+                              onClick={() => handleRename(conversation.id)}
+                              disabled={saving}
+                            >
+                              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground"
+                              onClick={cancelEditing}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <CardTitle className="text-base truncate">{conversation.title}</CardTitle>
+                            <CardDescription className="flex items-center gap-2 mt-1">
+                              <Clock className="w-3 h-3" />
+                              {formatDistanceToNow(new Date(conversation.updated_at), { addSuffix: true })}
+                            </CardDescription>
+                          </>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleContinue(conversation.id)}
-                        >
-                          Continue
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          className="text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDelete(conversation.id)}
-                          disabled={deleting === conversation.id}
-                        >
-                          {deleting === conversation.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
+                      {editingId !== conversation.id && (
+                        <div className="flex items-center gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            onClick={() => startEditing(conversation)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8"
+                            onClick={() => handleContinue(conversation.id)}
+                          >
+                            Continue
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                disabled={deleting === conversation.id}
+                              >
+                                {deleting === conversation.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete this conversation and all its messages. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(conversation.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      )}
                     </div>
                   </CardHeader>
                 </Card>

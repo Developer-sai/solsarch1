@@ -21,31 +21,31 @@ interface ArchitectureDiagramProps {
 
 // Professional default diagram
 const DEFAULT_DIAGRAM = `graph TB
-    subgraph "Client Layer"
+    subgraph Client["Client Layer"]
         CDN[CDN / Edge Network]
         LB[Load Balancer]
     end
     
-    subgraph "Application Layer"
+    subgraph Application["Application Layer"]
         API[API Gateway]
         WEB[Web Servers]
         APP[Application Servers]
     end
     
-    subgraph "Service Layer"
+    subgraph Service["Service Layer"]
         AUTH[Auth Service]
         CACHE[(Redis Cache)]
         QUEUE[Message Queue]
         SEARCH[Search Engine]
     end
     
-    subgraph "Data Layer"
+    subgraph Data["Data Layer"]
         DB[(Primary Database)]
         REPLICA[(Read Replicas)]
         STORAGE[(Object Storage)]
     end
     
-    subgraph "Background Processing"
+    subgraph Background["Background Processing"]
         WORKER[Workers]
         SCHEDULER[Job Scheduler]
     end
@@ -64,41 +64,50 @@ const DEFAULT_DIAGRAM = `graph TB
     WORKER --> STORAGE
     SCHEDULER --> QUEUE`;
 
+// Track initialized state
+let isMermaidInitialized = false;
+
 // Professional theme configuration
 const initMermaid = () => {
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: 'base',
-    themeVariables: {
-      // Professional dark theme with cyan accents
-      primaryColor: '#0d3b4c',
-      primaryTextColor: '#e2e8f0',
-      primaryBorderColor: '#22d3ee',
-      lineColor: '#64748b',
-      secondaryColor: '#1e293b',
-      tertiaryColor: '#0f172a',
-      background: '#0f172a',
-      mainBkg: '#1e293b',
-      nodeBorder: '#334155',
-      clusterBkg: '#1e293b',
-      clusterBorder: '#334155',
-      titleColor: '#f1f5f9',
-      edgeLabelBackground: '#1e293b',
-      textColor: '#e2e8f0',
-      // Subgraph styling
-      nodeTextColor: '#e2e8f0',
-    },
-    flowchart: {
-      useMaxWidth: true,
-      htmlLabels: true,
-      curve: 'basis',
-      padding: 30,
-      nodeSpacing: 50,
-      rankSpacing: 70,
-      diagramPadding: 20,
-    },
-    securityLevel: 'loose',
-  });
+  if (isMermaidInitialized) return;
+  
+  try {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'base',
+      themeVariables: {
+        primaryColor: '#0d3b4c',
+        primaryTextColor: '#e2e8f0',
+        primaryBorderColor: '#22d3ee',
+        lineColor: '#64748b',
+        secondaryColor: '#1e293b',
+        tertiaryColor: '#0f172a',
+        background: '#0f172a',
+        mainBkg: '#1e293b',
+        nodeBorder: '#334155',
+        clusterBkg: '#1e293b',
+        clusterBorder: '#334155',
+        titleColor: '#f1f5f9',
+        edgeLabelBackground: '#1e293b',
+        textColor: '#e2e8f0',
+        nodeTextColor: '#e2e8f0',
+      },
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis',
+        padding: 30,
+        nodeSpacing: 50,
+        rankSpacing: 70,
+        diagramPadding: 20,
+      },
+      securityLevel: 'loose',
+      suppressErrorRendering: true,
+    });
+    isMermaidInitialized = true;
+  } catch (e) {
+    console.warn('Mermaid already initialized');
+  }
 };
 
 const cleanDiagramString = (diagramStr: string): string => {
@@ -114,11 +123,28 @@ const cleanDiagramString = (diagramStr: string): string => {
     .replace(/\\t/g, '  ')
     .trim();
   
+  // Remove any leading/trailing backticks or markdown
+  cleaned = cleaned.replace(/^```mermaid\s*/i, '').replace(/```\s*$/i, '');
+  
+  // Replace problematic characters in labels
+  cleaned = cleaned.replace(/["']/g, '');
+  
+  // Fix subgraph naming - ensure proper format
+  cleaned = cleaned.replace(/subgraph\s+"([^"]+)"/g, 'subgraph $1');
+  cleaned = cleaned.replace(/subgraph\s+'([^']+)'/g, 'subgraph $1');
+  
+  // Ensure proper line breaks
   if (cleaned.includes(';') && !cleaned.includes('\n')) {
     cleaned = cleaned.replace(/;\s*/g, '\n    ');
   }
   
-  if (!cleaned.match(/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitGraph)/i)) {
+  // Check for valid diagram type
+  const validTypes = ['graph', 'flowchart', 'sequenceDiagram', 'classDiagram', 'stateDiagram', 'erDiagram', 'journey', 'gantt', 'pie', 'gitGraph', 'mindmap', 'timeline', 'sankey', 'quadrant', 'xychart', 'block'];
+  const hasValidType = validTypes.some(type => 
+    cleaned.toLowerCase().startsWith(type.toLowerCase())
+  );
+  
+  if (!hasValidType) {
     cleaned = 'graph TD\n    ' + cleaned;
   }
   
@@ -167,23 +193,38 @@ export const ArchitectureDiagram = memo(({ diagram, variant, className }: Archit
   const [svgContent, setSvgContent] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const renderAttemptRef = useRef(0);
+  const renderIdRef = useRef(0);
 
   const renderDiagram = useCallback(async (diagramStr: string): Promise<{ success: boolean; svg?: string }> => {
     initMermaid();
     
+    const currentRenderId = ++renderIdRef.current;
+    
     try {
       const cleanDiagram = cleanDiagramString(diagramStr);
-      const id = `mermaid-${variant}-${Date.now()}-${renderAttemptRef.current++}`;
+      const id = `mermaid-${variant.replace(/\s+/g, '-')}-${currentRenderId}`;
+      
+      // Remove any existing element with this ID
+      const existing = document.getElementById(id);
+      if (existing) {
+        existing.remove();
+      }
       
       const { svg } = await mermaid.render(id, cleanDiagram);
       return { success: true, svg };
     } catch (error) {
-      console.error('Mermaid rendering error:', error);
+      console.warn('Mermaid rendering error, using fallback:', error);
       
       try {
-        const id = `mermaid-fallback-${variant}-${Date.now()}-${renderAttemptRef.current++}`;
-        const { svg } = await mermaid.render(id, DEFAULT_DIAGRAM);
+        const fallbackId = `mermaid-fallback-${variant.replace(/\s+/g, '-')}-${currentRenderId}`;
+        
+        // Remove any existing element with this ID
+        const existing = document.getElementById(fallbackId);
+        if (existing) {
+          existing.remove();
+        }
+        
+        const { svg } = await mermaid.render(fallbackId, DEFAULT_DIAGRAM);
         return { success: true, svg };
       } catch (fallbackError) {
         console.error('Fallback diagram failed:', fallbackError);

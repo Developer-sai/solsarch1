@@ -1,8 +1,9 @@
 import { memo, useState } from 'react';
-import { User, Bot, Copy, Check, ExternalLink } from 'lucide-react';
+import { User, Bot, Copy, Check, ExternalLink, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { ArtifactData } from '@/pages/app/AppChat';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Message {
   id: string;
@@ -15,47 +16,141 @@ interface Message {
 interface ChatMessageBubbleProps {
   message: Message;
   onViewArtifact?: () => void;
+  onRegenerate?: () => void;
 }
 
-export const ChatMessageBubble = memo(({ message, onViewArtifact }: ChatMessageBubbleProps) => {
+export const ChatMessageBubble = memo(({ message, onViewArtifact, onRegenerate }: ChatMessageBubbleProps) => {
   const isUser = message.role === 'user';
+  const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(message.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className={cn(
-      "flex gap-4 p-4 sm:p-6",
-      isUser ? "bg-transparent" : "bg-secondary/20"
+      "group relative py-6 px-4 sm:px-6",
+      isUser ? "bg-transparent" : "bg-secondary/10"
     )}>
-      <div className={cn(
-        "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center",
-        isUser 
-          ? "bg-primary/20 text-primary" 
-          : "bg-gradient-to-br from-primary/30 to-info/30 text-primary"
-      )}>
-        {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-      </div>
-      <div className="flex-1 min-w-0 space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-sm text-foreground">
-            {isUser ? 'You' : 'SolsArch'}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
+      <div className="max-w-3xl mx-auto flex gap-4">
+        {/* Avatar */}
+        <div className={cn(
+          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+          isUser 
+            ? "bg-gradient-to-br from-primary to-primary/80" 
+            : "bg-gradient-to-br from-emerald-500 to-teal-600"
+        )}>
+          {isUser ? (
+            <User className="w-4 h-4 text-primary-foreground" />
+          ) : (
+            <Bot className="w-4 h-4 text-white" />
+          )}
         </div>
-        <div className="text-sm text-foreground/90 leading-relaxed prose prose-sm dark:prose-invert max-w-none">
-          <MessageContent content={message.content} />
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 space-y-3">
+          {/* Header */}
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm text-foreground">
+              {isUser ? 'You' : 'SolsArch'}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+
+          {/* Message Content */}
+          <div className="text-sm text-foreground/90 leading-relaxed prose prose-sm dark:prose-invert max-w-none">
+            <MessageContent content={message.content} />
+          </div>
+
+          {/* Artifact Button */}
+          {message.artifact && onViewArtifact && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2 mt-2 bg-primary/5 border-primary/20 hover:bg-primary/10"
+              onClick={onViewArtifact}
+            >
+              <ExternalLink className="w-3 h-3" />
+              View {message.artifact.type === 'diagram' ? 'Diagram' : 'Plan'}
+            </Button>
+          )}
+
+          {/* Action Bar - ChatGPT style */}
+          {!isUser && (
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pt-1">
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      onClick={handleCopy}
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Copy</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className={cn(
+                        "h-7 w-7",
+                        feedback === 'up' ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                      )}
+                      onClick={() => setFeedback(feedback === 'up' ? null : 'up')}
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Good response</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className={cn(
+                        "h-7 w-7",
+                        feedback === 'down' ? "text-destructive" : "text-muted-foreground hover:text-foreground"
+                      )}
+                      onClick={() => setFeedback(feedback === 'down' ? null : 'down')}
+                    >
+                      <ThumbsDown className="w-3.5 h-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">Bad response</TooltipContent>
+                </Tooltip>
+
+                {onRegenerate && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={onRegenerate}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Regenerate</TooltipContent>
+                  </Tooltip>
+                )}
+              </TooltipProvider>
+            </div>
+          )}
         </div>
-        {message.artifact && onViewArtifact && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2 mt-2"
-            onClick={onViewArtifact}
-          >
-            <ExternalLink className="w-3 h-3" />
-            View {message.artifact.type === 'diagram' ? 'Diagram' : 'Plan'}
-          </Button>
-        )}
       </div>
     </div>
   );
@@ -107,7 +202,6 @@ function parseContent(content: string): React.ReactNode[] {
 }
 
 function formatTextContent(text: string): React.ReactNode {
-  // Split by newlines and process each line
   const lines = text.split('\n');
   
   return lines.map((line, i) => {
@@ -125,6 +219,11 @@ function formatTextContent(text: string): React.ReactNode {
     if (line.startsWith('- ')) {
       return <li key={i} className="ml-4">{processInline(line.slice(2))}</li>;
     }
+    // Numbered list
+    if (/^\d+\.\s/.test(line)) {
+      const content = line.replace(/^\d+\.\s/, '');
+      return <li key={i} className="ml-4 list-decimal">{processInline(content)}</li>;
+    }
     // Horizontal rule
     if (line === '---') {
       return <hr key={i} className="my-4 border-border" />;
@@ -139,17 +238,30 @@ function formatTextContent(text: string): React.ReactNode {
 }
 
 function processInline(text: string): React.ReactNode {
-  // Bold
+  // Handle bold, italic, inline code
   const parts: React.ReactNode[] = [];
-  const boldRegex = /\*\*(.*?)\*\*/g;
+  // Match bold, italic, or inline code
+  const inlineRegex = /(\*\*(.*?)\*\*)|(`([^`]+)`)/g;
   let lastIndex = 0;
   let match;
 
-  while ((match = boldRegex.exec(text)) !== null) {
+  while ((match = inlineRegex.exec(text)) !== null) {
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
     }
-    parts.push(<strong key={match.index} className="font-semibold">{match[1]}</strong>);
+    
+    if (match[1]) {
+      // Bold
+      parts.push(<strong key={match.index} className="font-semibold">{match[2]}</strong>);
+    } else if (match[3]) {
+      // Inline code
+      parts.push(
+        <code key={match.index} className="px-1.5 py-0.5 rounded bg-secondary text-sm font-mono">
+          {match[4]}
+        </code>
+      );
+    }
+    
     lastIndex = match.index + match[0].length;
   }
 
@@ -170,15 +282,30 @@ const CodeBlock = memo(({ code, language }: { code: string; language?: string })
   };
 
   return (
-    <div className="my-3 rounded-lg border border-border overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/80 border-b border-border">
+    <div className="my-3 rounded-xl border border-border overflow-hidden bg-[#1e1e1e]">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-border/50">
         <span className="text-xs font-mono text-muted-foreground">{language || 'code'}</span>
-        <Button variant="ghost" size="sm" onClick={handleCopy} className="h-6 px-2">
-          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleCopy} 
+          className="h-6 px-2 text-muted-foreground hover:text-foreground"
+        >
+          {copied ? (
+            <>
+              <Check className="w-3 h-3 mr-1" />
+              <span className="text-xs">Copied!</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-3 h-3 mr-1" />
+              <span className="text-xs">Copy</span>
+            </>
+          )}
         </Button>
       </div>
-      <pre className="p-3 bg-secondary/30 overflow-x-auto">
-        <code className="text-xs font-mono text-foreground">{code}</code>
+      <pre className="p-4 overflow-x-auto">
+        <code className="text-sm font-mono text-[#d4d4d4]">{code}</code>
       </pre>
     </div>
   );
