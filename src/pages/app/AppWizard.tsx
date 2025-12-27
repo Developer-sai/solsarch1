@@ -7,7 +7,6 @@ import { ArchitectureDiagram } from '@/components/app/ArchitectureDiagram';
 import { GPUDashboard } from '@/components/app/GPUDashboard';
 import { Recommendations } from '@/components/app/Recommendations';
 import { TradeOffSliders } from '@/components/app/TradeOffSliders';
-import { ExportButton } from '@/components/app/ExportButton';
 import { ResourceRightsizing } from '@/components/app/ResourceRightsizing';
 import { CostBreakdown } from '@/components/app/CostBreakdown';
 import { SpotOptimization } from '@/components/app/SpotOptimization';
@@ -15,12 +14,21 @@ import { ObservabilityPanel } from '@/components/app/ObservabilityPanel';
 import { GPUOptimization } from '@/components/app/GPUOptimization';
 import { CloudBillAnalyzer } from '@/components/app/CloudBillAnalyzer';
 import { OneClickOptimizations } from '@/components/app/OneClickOptimizations';
+import { ExportOptions } from '@/components/app/ExportOptions';
+import { DiagramPresets, DiagramPreset } from '@/components/app/DiagramPresets';
 import { Requirements, ArchitectureResult } from '@/types/architecture';
-import { Loader2, Sparkles, RotateCcw } from 'lucide-react';
+import { Loader2, Sparkles, RotateCcw, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 export default function AppWizard() {
   const navigate = useNavigate();
@@ -88,6 +96,20 @@ export default function AppWizard() {
     setRequirements(null);
   };
 
+  const [showPresets, setShowPresets] = useState(false);
+  const [presetPrompt, setPresetPrompt] = useState<string | null>(null);
+
+  const handleSelectPreset = (preset: DiagramPreset) => {
+    setShowPresets(false);
+    // Convert preset prompt to requirements-like format
+    // For now, just show a toast and let them fill the form
+    toast({
+      title: `Template: ${preset.name}`,
+      description: 'Fill in the details below to customize this architecture',
+    });
+    setPresetPrompt(preset.prompt);
+  };
+
   return (
     <div className="h-full overflow-auto">
       {isGenerating && (
@@ -107,7 +129,27 @@ export default function AppWizard() {
 
       {!result ? (
         <div className="container mx-auto px-4 sm:px-6 py-8">
-          <RequirementsWizard onSubmit={handleGenerate} isLoading={isGenerating} />
+          <div className="flex justify-end mb-4">
+            <Dialog open={showPresets} onOpenChange={setShowPresets}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Lightbulb className="w-4 h-4" />
+                  Load Template
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Architecture Templates</DialogTitle>
+                </DialogHeader>
+                <DiagramPresets onSelectPreset={handleSelectPreset} />
+              </DialogContent>
+            </Dialog>
+          </div>
+          <RequirementsWizard 
+            onSubmit={handleGenerate} 
+            isLoading={isGenerating}
+            initialNotes={presetPrompt || undefined}
+          />
         </div>
       ) : (
         <div className="container mx-auto px-4 sm:px-6 py-8">
@@ -115,10 +157,11 @@ export default function AppWizard() {
             <h1 className="text-2xl font-bold">Architecture Results</h1>
             <div className="flex items-center gap-2">
               {requirements && (
-                <ExportButton 
+                <ExportOptions 
                   result={result} 
                   requirements={requirements} 
-                  selectedVariant={selectedVariant} 
+                  selectedVariant={selectedVariant}
+                  compact
                 />
               )}
               <Button variant="outline" size="sm" onClick={handleReset} className="gap-2">
