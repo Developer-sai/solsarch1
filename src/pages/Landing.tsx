@@ -157,8 +157,8 @@ export default function Landing() {
             
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-              AI Architecture{" "}
-              <span className="gradient-text">Diagram Generator</span>
+              AI-Powered{" "}
+              <span className="gradient-text">Solution Architect</span>
             </h1>
             
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mb-8 px-2 animate-fade-in-up leading-relaxed" style={{ animationDelay: "0.2s" }}>
