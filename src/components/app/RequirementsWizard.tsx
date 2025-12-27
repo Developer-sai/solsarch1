@@ -24,6 +24,7 @@ import {
 interface RequirementsWizardProps {
   onSubmit: (requirements: Requirements) => void;
   isLoading: boolean;
+  initialNotes?: string;
 }
 
 const APP_TYPES = [
