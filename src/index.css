@@ -156,10 +156,6 @@
     animation: float 6s ease-in-out infinite;
   }
 
-  .animate-float-drift {
-    animation: float-drift 20s ease-in-out infinite;
-  }
-
   .animate-pulse-subtle {
     animation: pulse-subtle 3s ease-in-out infinite;
   }
@@ -185,30 +181,11 @@
   .animate-scale-in {
     animation: scale-in 0.3s ease-out;
   }
-
-  .animate-marquee {
-    animation: marquee 30s linear infinite;
-  }
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-12px); }
-}
-
-@keyframes float-drift {
-  0%, 100% { 
-    transform: translateY(0px) translateX(0px) rotate(0deg); 
-  }
-  25% { 
-    transform: translateY(-15px) translateX(10px) rotate(2deg); 
-  }
-  50% { 
-    transform: translateY(-8px) translateX(-5px) rotate(-1deg); 
-  }
-  75% { 
-    transform: translateY(-20px) translateX(8px) rotate(1deg); 
-  }
 }
 
 @keyframes pulse-subtle {
@@ -240,11 +217,6 @@
 @keyframes scale-in {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
 }
 
 /* Custom scrollbar - refined */
