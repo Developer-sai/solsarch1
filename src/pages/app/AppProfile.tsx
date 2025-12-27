@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Save, User } from "lucide-react";
 import { toast } from "sonner";
+import { LLMSettingsPanel } from "@/components/app/LLMSettingsPanel";
 
 interface Profile {
   id: string;
@@ -65,7 +66,7 @@ export default function AppProfile() {
           .single();
 
         if (createError) throw createError;
-        
+
         setProfile(newProfile);
         setFormData({
           full_name: newProfile.full_name || "",
@@ -190,6 +191,9 @@ export default function AppProfile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* LLM Settings */}
+          <LLMSettingsPanel />
         </div>
       </div>
     </div>

@@ -15,6 +15,9 @@ import { GPUOptimization } from '@/components/app/GPUOptimization';
 import { CloudBillAnalyzer } from '@/components/app/CloudBillAnalyzer';
 import { OneClickOptimizations } from '@/components/app/OneClickOptimizations';
 import { ExportOptions } from '@/components/app/ExportOptions';
+import { IaCExportPanel } from '@/components/app/IaCExportPanel';
+import { VersionHistoryPanel } from '@/components/app/VersionHistoryPanel';
+import { SKUBrowser } from '@/components/app/SKUBrowser';
 import { DiagramPresets, DiagramPreset } from '@/components/app/DiagramPresets';
 import { Requirements, ArchitectureResult } from '@/types/architecture';
 import { Loader2, Sparkles, RotateCcw, Lightbulb } from 'lucide-react';
@@ -44,7 +47,7 @@ export default function AppWizard() {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         toast({
           title: "Authentication Required",
@@ -74,7 +77,7 @@ export default function AppWizard() {
 
       const data: ArchitectureResult = await response.json();
       setResult(data);
-      
+
       toast({
         title: "Architecture Generated!",
         description: "3 architecture variants created with cost comparisons.",
@@ -145,8 +148,8 @@ export default function AppWizard() {
               </DialogContent>
             </Dialog>
           </div>
-          <RequirementsWizard 
-            onSubmit={handleGenerate} 
+          <RequirementsWizard
+            onSubmit={handleGenerate}
             isLoading={isGenerating}
             initialNotes={presetPrompt || undefined}
           />
@@ -157,9 +160,9 @@ export default function AppWizard() {
             <h1 className="text-2xl font-bold">Architecture Results</h1>
             <div className="flex items-center gap-2">
               {requirements && (
-                <ExportOptions 
-                  result={result} 
-                  requirements={requirements} 
+                <ExportOptions
+                  result={result}
+                  requirements={requirements}
                   selectedVariant={selectedVariant}
                   compact
                 />
@@ -172,38 +175,53 @@ export default function AppWizard() {
           </div>
 
           <div className="space-y-8 animate-fade-in">
-            <ArchitectureView 
+            <ArchitectureView
               architectures={result.architectures}
               selectedVariant={selectedVariant}
               onVariantChange={setSelectedVariant}
             />
-            
+
             <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
-              <CostComparison 
-                architecture={result.architectures[selectedVariant]} 
+              <CostComparison
+                architecture={result.architectures[selectedVariant]}
               />
-              <ArchitectureDiagram 
+              <ArchitectureDiagram
                 diagram={result.mermaidDiagram}
                 variant={result.architectures[selectedVariant].variant}
               />
             </div>
 
-            <Tabs defaultValue="optimizations" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+            <Tabs defaultValue="iac" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 h-auto">
+                <TabsTrigger value="iac" className="text-xs sm:text-sm py-2">IaC Export</TabsTrigger>
+                <TabsTrigger value="pricing" className="text-xs sm:text-sm py-2">Pricing</TabsTrigger>
+                <TabsTrigger value="versions" className="text-xs sm:text-sm py-2">Versions</TabsTrigger>
                 <TabsTrigger value="optimizations" className="text-xs sm:text-sm py-2">Optimizations</TabsTrigger>
                 <TabsTrigger value="bill" className="text-xs sm:text-sm py-2">Bill Analyzer</TabsTrigger>
                 <TabsTrigger value="resources" className="text-xs sm:text-sm py-2">Resources</TabsTrigger>
                 <TabsTrigger value="observability" className="text-xs sm:text-sm py-2">Observability</TabsTrigger>
               </TabsList>
-              
+
+              <TabsContent value="iac" className="mt-4 sm:mt-6">
+                <IaCExportPanel
+                  result={result}
+                  selectedVariant={selectedVariant}
+                  projectName={requirements?.appType || 'solsarch-project'}
+                />
+              </TabsContent>
+
+              <TabsContent value="pricing" className="mt-4 sm:mt-6">
+                <SKUBrowser showCompareMode={true} />
+              </TabsContent>
+
               <TabsContent value="optimizations" className="mt-4 sm:mt-6">
                 <OneClickOptimizations />
               </TabsContent>
-              
+
               <TabsContent value="bill" className="mt-4 sm:mt-6">
                 <CloudBillAnalyzer />
               </TabsContent>
-              
+
               <TabsContent value="resources" className="mt-4 sm:mt-6 space-y-4 sm:space-y-8">
                 <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
                   <ResourceRightsizing />
@@ -214,9 +232,16 @@ export default function AppWizard() {
                   <SpotOptimization />
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="observability" className="mt-4 sm:mt-6">
                 <ObservabilityPanel />
+              </TabsContent>
+
+              <TabsContent value="versions" className="mt-4 sm:mt-6">
+                <VersionHistoryPanel
+                  result={result}
+                  selectedVariant={selectedVariant}
+                />
               </TabsContent>
             </Tabs>
 
