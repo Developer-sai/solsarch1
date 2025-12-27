@@ -3,12 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { FloatingLogos, LogoStrip } from '@/components/landing/FloatingLogos';
 import { 
   Cloud, 
   Zap, 
   ArrowRight, 
   Globe, 
-  Smartphone, 
   Database, 
   Layers, 
   Sparkles, 
@@ -24,10 +24,7 @@ import {
   Building2,
   Users,
   FileCode2,
-  Network,
   GitBranch,
-  Box,
-  Workflow,
   Play,
   Star,
   Clock,
@@ -41,20 +38,9 @@ import {
   ShoppingCart,
   TrendingUp,
   FileSpreadsheet,
-  FileText,
-  GitCompare,
-  Timer,
   Cpu,
   XCircle,
-  Check
 } from 'lucide-react';
-
-const TRUSTED_LOGOS = [
-  { name: 'AWS', icon: Cloud },
-  { name: 'Azure', icon: Cloud },
-  { name: 'GCP', icon: Cloud },
-  { name: 'Oracle', icon: Database },
-];
 
 const PROBLEMS = [
   { icon: FileSpreadsheet, text: 'Spreadsheet-based cost comparisons' },
@@ -185,21 +171,20 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/90 backdrop-blur-2xl">
-        <div className="container mx-auto px-4 sm:px-6">
+      {/* Navigation - Clean YC style */}
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+        <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary via-primary/80 to-info flex items-center justify-center shadow-lg shadow-primary/20">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary via-primary/80 to-info flex items-center justify-center shadow-lg shadow-primary/20">
                 <Cloud className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold tracking-tight">SolsArch</span>
-              <Badge variant="secondary" className="hidden sm:inline-flex text-[10px] px-1.5 py-0">ENTERPRISE</Badge>
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
               <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</Link>
-              <Link to="/guide" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Guide</Link>
+              <Link to="/guide" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
               <Link to="/faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">FAQ</Link>
               <Link to="/contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
             </div>
@@ -211,11 +196,11 @@ export default function Landing() {
                 </Button>
               ) : (
                 <>
-                  <Button asChild variant="ghost">
-                    <Link to="/sign-in">Sign In</Link>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to="/sign-in">Log In</Link>
                   </Button>
-                  <Button asChild variant="hero" className="shadow-lg shadow-primary/20">
-                    <Link to="/sign-up">Start Free Trial</Link>
+                  <Button asChild variant="hero" size="sm" className="shadow-lg shadow-primary/25">
+                    <Link to="/sign-up">Get Started</Link>
                   </Button>
                 </>
               )}
@@ -231,24 +216,24 @@ export default function Landing() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background/98 backdrop-blur-2xl">
-            <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
+          <div className="md:hidden border-t border-border bg-background/98 backdrop-blur-xl">
+            <div className="container mx-auto px-6 py-4 flex flex-col gap-4">
               <Link to="/about" className="text-base py-2 text-muted-foreground hover:text-foreground">About</Link>
-              <Link to="/guide" className="text-base py-2 text-muted-foreground hover:text-foreground">Guide</Link>
+              <Link to="/guide" className="text-base py-2 text-muted-foreground hover:text-foreground">Docs</Link>
               <Link to="/faq" className="text-base py-2 text-muted-foreground hover:text-foreground">FAQ</Link>
               <Link to="/contact" className="text-base py-2 text-muted-foreground hover:text-foreground">Contact</Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 {user ? (
                   <Button asChild variant="hero" className="w-full">
-                    <Link to="/app">Go to Dashboard</Link>
+                    <Link to="/app">Dashboard</Link>
                   </Button>
                 ) : (
                   <>
                     <Button asChild variant="outline" className="w-full">
-                      <Link to="/sign-in">Sign In</Link>
+                      <Link to="/sign-in">Log In</Link>
                     </Button>
                     <Button asChild variant="hero" className="w-full">
-                      <Link to="/sign-up">Start Free Trial</Link>
+                      <Link to="/sign-up">Get Started</Link>
                     </Button>
                   </>
                 )}
@@ -258,72 +243,76 @@ export default function Landing() {
         )}
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section - YC Inspired Clean Design */}
       <main className="relative overflow-hidden pt-16">
-        {/* Background Effects */}
-        <div className="absolute inset-0 bg-grid-pattern bg-grid opacity-[0.03]" />
-        <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[150px] animate-pulse" />
-        <div className="absolute top-40 right-1/4 w-[400px] h-[400px] bg-info/15 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/10 rounded-full blur-[150px]" />
+        {/* Floating cloud logos background */}
+        <FloatingLogos />
         
-        <div className="container relative mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-12">
-          <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
+        {/* Gradient orbs */}
+        <div className="absolute top-32 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[180px]" />
+        <div className="absolute top-48 right-1/4 w-[500px] h-[500px] bg-info/10 rounded-full blur-[150px]" />
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/8 rounded-full blur-[180px]" />
+        
+        <div className="container relative mx-auto px-6 pt-20 sm:pt-32 pb-16">
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
             {/* Trust Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/80 border border-border/50 backdrop-blur-sm mb-8 animate-fade-in">
-              <Star className="w-4 h-4 text-warning fill-warning" />
-              <span className="text-sm font-medium text-muted-foreground">
-                Trusted by 500+ Enterprise Teams
-              </span>
-              <span className="text-xs text-muted-foreground/60">|</span>
-              <span className="text-sm text-primary font-semibold">4.9/5 Rating</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/60 border border-border/40 backdrop-blur-sm mb-8 animate-fade-in">
+              <Star className="w-3.5 h-3.5 text-warning fill-warning" />
+              <span className="text-xs font-medium text-muted-foreground">Trusted by 500+ teams</span>
+              <span className="w-px h-3 bg-border" />
+              <span className="text-xs text-primary font-semibold">4.9★</span>
             </div>
             
-            {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-              AI-Powered{" "}
-              <span className="gradient-text">Solutions Architect</span>
+            {/* Main Headline - Clean and Bold */}
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up leading-[1.1]" style={{ animationDelay: "0.1s" }}>
+              Cloud Architecture
+              <br />
+              <span className="gradient-text">in Seconds</span>
             </h1>
             
-            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mb-8 px-2 animate-fade-in-up leading-relaxed" style={{ animationDelay: "0.2s" }}>
-              Design production-ready cloud architectures in seconds. Compare costs across AWS, Azure, GCP, and OCI. Export Terraform, diagrams, and docs — all powered by AI.
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mb-10 animate-fade-in-up leading-relaxed" style={{ animationDelay: "0.2s" }}>
+              Design production-ready infrastructure across AWS, Azure, GCP, and OCI. 
+              Get instant cost comparison, diagrams, and Terraform export.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-12 w-full sm:w-auto animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            {/* CTA Buttons - Minimal */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-16 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
               {user ? (
                 <>
-                  <Button onClick={() => navigate('/app/chat')} variant="hero" size="lg" className="gap-2 w-full sm:w-auto shadow-xl shadow-primary/25 text-base px-8">
-                    <MessageSquare className="w-5 h-5" />
-                    Chat with AI Architect
-                    <ArrowRight className="w-5 h-5" />
+                  <Button onClick={() => navigate('/app/chat')} variant="hero" size="lg" className="gap-2 shadow-xl shadow-primary/30 px-8">
+                    <MessageSquare className="w-4 h-4" />
+                    Start Designing
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
-                  <Button onClick={() => navigate('/app/wizard')} variant="outline" size="lg" className="gap-2 border-border/50 w-full sm:w-auto text-base">
-                    <ListChecks className="w-5 h-5" />
+                  <Button onClick={() => navigate('/app/wizard')} variant="outline" size="lg" className="gap-2">
+                    <ListChecks className="w-4 h-4" />
                     Use Wizard
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button onClick={() => navigate('/sign-up')} variant="hero" size="lg" className="gap-2 w-full sm:w-auto shadow-xl shadow-primary/25 text-base px-8">
-                    <Play className="w-5 h-5" />
-                    Start Building Free
-                    <ArrowRight className="w-5 h-5" />
+                  <Button onClick={() => navigate('/sign-up')} variant="hero" size="lg" className="gap-2 shadow-xl shadow-primary/30 px-8">
+                    <Play className="w-4 h-4" />
+                    Start Free
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
-                  <Button onClick={() => navigate('/sign-in')} variant="outline" size="lg" className="gap-2 border-border/50 w-full sm:w-auto text-base">
-                    <LogIn className="w-5 h-5" />
-                    Sign In
+                  <Button onClick={() => navigate('/sign-in')} variant="outline" size="lg" className="gap-2">
+                    <LogIn className="w-4 h-4" />
+                    Log In
                   </Button>
                 </>
               )}
             </div>
 
-            {/* Quick Stats */}
-            <div className="flex flex-wrap items-center justify-center gap-8 mb-16 animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
+            {/* Stats Row */}
+            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
               {STATS.map((stat) => (
-                <div key={stat.label} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-card/50 border border-border/50">
-                  <stat.icon className="w-5 h-5 text-primary" />
+                <div key={stat.label} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-card/80 border border-border/50 flex items-center justify-center">
+                    <stat.icon className="w-5 h-5 text-primary" />
+                  </div>
                   <div className="text-left">
-                    <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                    <div className="text-2xl font-bold">{stat.value}</div>
                     <div className="text-xs text-muted-foreground">{stat.label}</div>
                   </div>
                 </div>
@@ -332,22 +321,33 @@ export default function Landing() {
           </div>
         </div>
 
+        {/* Cloud Provider Logos Strip */}
+        <div className="border-y border-border/40 bg-card/30 backdrop-blur-sm">
+          <div className="container mx-auto px-6">
+            <div className="py-6 text-center">
+              <p className="text-xs font-medium text-muted-foreground mb-4 tracking-wider uppercase">Live Pricing Intelligence For</p>
+              <LogoStrip />
+            </div>
+          </div>
+        </div>
+
         {/* The Problem Section */}
-        <div className="border-y border-border/50 bg-destructive/5">
-          <div className="container mx-auto px-4 sm:px-6 py-16">
+        <div className="bg-destructive/5 border-y border-destructive/10">
+          <div className="container mx-auto px-6 py-20">
             <div className="text-center mb-12">
               <Badge variant="destructive" className="mb-4">THE PROBLEM</Badge>
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">Cloud Architecture is Broken</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Companies spend weeks designing cloud infrastructure, manually comparing prices, and writing IaC from scratch.
+                Companies spend weeks designing cloud infrastructure manually
               </p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-              {PROBLEMS.map((problem) => (
+              {PROBLEMS.map((problem, index) => (
                 <div 
                   key={problem.text}
-                  className="flex items-center gap-3 p-4 rounded-xl bg-card/50 border border-destructive/20"
+                  className="flex items-center gap-3 p-4 rounded-xl bg-card/50 border border-destructive/20 animate-fade-in-up"
+                  style={{ animationDelay: `${0.05 * index}s` }}
                 >
                   <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
                   <span className="text-sm text-muted-foreground">{problem.text}</span>
@@ -362,12 +362,12 @@ export default function Landing() {
         </div>
 
         {/* Who Needs SolsArch Section */}
-        <div className="container mx-auto px-4 sm:px-6 py-20">
-          <div className="text-center mb-12">
-            <Badge variant="outline" className="mb-4">TARGET CUSTOMERS</Badge>
+        <div className="container mx-auto px-6 py-24">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4">FOR TEAMS</Badge>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">Built for Teams That Ship</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              From startup to enterprise, SolsArch accelerates your cloud architecture workflow
+              From startup to enterprise, accelerate your cloud architecture workflow
             </p>
           </div>
 
@@ -375,11 +375,11 @@ export default function Landing() {
             {TARGET_CUSTOMERS.map((customer, index) => (
               <div 
                 key={customer.title}
-                className={`p-6 rounded-xl bg-gradient-to-br ${customer.color} border border-border/50 hover:border-primary/30 transition-all group animate-fade-in-up`}
-                style={{ animationDelay: `${0.1 * index}s` }}
+                className={`group p-6 rounded-2xl bg-gradient-to-br ${customer.color} border border-border/40 hover:border-primary/30 transition-all duration-300 animate-fade-in-up`}
+                style={{ animationDelay: `${0.08 * index}s` }}
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-lg bg-card/80 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-card/80 border border-border/50 flex items-center justify-center group-hover:scale-105 transition-transform">
                     <customer.icon className="w-6 h-6 text-primary" />
                   </div>
                   <h3 className="text-lg font-bold">{customer.title}</h3>
@@ -396,7 +396,7 @@ export default function Landing() {
                   ))}
                 </div>
 
-                <div className="pt-4 border-t border-border/50">
+                <div className="pt-4 border-t border-border/40">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-success" />
                     <span className="text-sm font-medium text-success">{customer.roi}</span>
@@ -408,27 +408,28 @@ export default function Landing() {
         </div>
 
         {/* Comparison Table Section */}
-        <div className="border-y border-border/50 bg-secondary/20">
-          <div className="container mx-auto px-4 sm:px-6 py-20">
+        <div className="border-y border-border/40 bg-secondary/20">
+          <div className="container mx-auto px-6 py-24">
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4">COMPARISON</Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">What SolsArch Solves</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">The SolsArch Advantage</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                See the difference between traditional architecture workflows and SolsArch
+                See the difference between traditional workflows and SolsArch
               </p>
             </div>
 
             <div className="max-w-3xl mx-auto">
-              <div className="rounded-xl overflow-hidden border border-border/50">
-                <div className="grid grid-cols-3 bg-card/80 p-4 font-semibold border-b border-border/50">
-                  <div>Pain Point</div>
+              <div className="rounded-2xl overflow-hidden border border-border/40">
+                <div className="grid grid-cols-3 bg-card/80 p-5 font-semibold border-b border-border/40">
+                  <div>Task</div>
                   <div className="text-center text-muted-foreground">Traditional</div>
-                  <div className="text-center text-primary">With SolsArch</div>
+                  <div className="text-center text-primary">SolsArch</div>
                 </div>
                 {COMPARISON_DATA.map((row, index) => (
                   <div 
                     key={row.painPoint} 
-                    className={`grid grid-cols-3 p-4 ${index % 2 === 0 ? 'bg-card/30' : 'bg-card/50'}`}
+                    className={`grid grid-cols-3 p-5 ${index % 2 === 0 ? 'bg-card/30' : 'bg-card/50'} animate-fade-in-up`}
+                    style={{ animationDelay: `${0.05 * index}s` }}
                   >
                     <div className="font-medium">{row.painPoint}</div>
                     <div className="text-center text-muted-foreground">{row.traditional}</div>
@@ -441,12 +442,12 @@ export default function Landing() {
         </div>
 
         {/* Use Cases Section */}
-        <div className="container mx-auto px-4 sm:px-6 py-20">
-          <div className="text-center mb-12">
+        <div className="container mx-auto px-6 py-24">
+          <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">USE CASES</Badge>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">Real-World Examples</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              See how SolsArch handles complex architecture requirements across industries
+              See how SolsArch handles complex architecture requirements
             </p>
           </div>
 
@@ -454,22 +455,22 @@ export default function Landing() {
             {USE_CASES.map((useCase, index) => (
               <div 
                 key={useCase.industry}
-                className="p-6 rounded-xl bg-card/50 border border-border/50 hover:border-primary/30 transition-all animate-fade-in-up"
-                style={{ animationDelay: `${0.1 * index}s` }}
+                className="group p-6 rounded-2xl bg-card/50 border border-border/40 hover:border-primary/30 transition-all duration-300 animate-fade-in-up"
+                style={{ animationDelay: `${0.08 * index}s` }}
               >
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
                     <useCase.icon className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="font-bold">{useCase.industry}</h3>
                 </div>
                 
-                <p className="text-sm italic text-muted-foreground mb-4">{useCase.quote}</p>
+                <p className="text-sm italic text-muted-foreground mb-4 leading-relaxed">{useCase.quote}</p>
                 
-                <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                <div className="p-4 rounded-xl bg-success/10 border border-success/20">
                   <div className="flex items-start gap-2">
                     <Sparkles className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-foreground">{useCase.output}</p>
+                    <p className="text-sm">{useCase.output}</p>
                   </div>
                 </div>
               </div>
@@ -478,37 +479,38 @@ export default function Landing() {
         </div>
 
         {/* Competitive Advantage Section */}
-        <div className="border-y border-border/50 bg-primary/5">
-          <div className="container mx-auto px-4 sm:px-6 py-20">
+        <div className="border-y border-border/40 bg-primary/5">
+          <div className="container mx-auto px-6 py-24">
             <div className="text-center mb-12">
               <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">COMPETITIVE EDGE</Badge>
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">Why Choose SolsArch?</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                See how we compare to traditional tools and consulting
+                How we compare to traditional tools and consulting
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
-              {COMPETITORS.map((comp) => (
+              {COMPETITORS.map((comp, index) => (
                 <div 
                   key={comp.name}
-                  className="p-5 rounded-xl bg-card/50 border border-border/50"
+                  className="p-5 rounded-xl bg-card/50 border border-border/40 hover:border-primary/20 transition-all animate-fade-in-up"
+                  style={{ animationDelay: `${0.08 * index}s` }}
                 >
-                  <div className="text-sm text-muted-foreground mb-2">vs. {comp.name}</div>
-                  <p className="font-medium">{comp.advantage}</p>
+                  <div className="text-xs text-muted-foreground mb-2 font-medium">vs. {comp.name}</div>
+                  <p className="font-medium text-sm">{comp.advantage}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Main Features Grid */}
-        <div className="container mx-auto px-4 sm:px-6 py-20">
-          <div className="text-center mb-12">
+        {/* Features Grid */}
+        <div className="container mx-auto px-6 py-24">
+          <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">FEATURES</Badge>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">Everything You Need</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Powerful features for modern cloud architecture design
+              Powerful features for modern cloud architecture
             </p>
           </div>
 
@@ -516,55 +518,55 @@ export default function Landing() {
             <FeatureCard
               icon={<Globe className="w-6 h-6" />}
               title="Multi-Cloud Support"
-              description="Design for AWS, Azure, GCP, and OCI with provider-specific services and real-time pricing"
+              description="Design for AWS, Azure, GCP, and OCI with real-time pricing"
               gradient="from-info/20 to-info/5"
             />
             <FeatureCard
               icon={<BarChart3 className="w-6 h-6" />}
               title="Live Cost Comparison"
-              description="Compare costs side-by-side across all major cloud providers with what-if analysis"
+              description="Compare costs side-by-side across all major providers"
               gradient="from-success/20 to-success/5"
             />
             <FeatureCard
               icon={<Sparkles className="w-6 h-6" />}
               title="AI-Powered Generation"
-              description="Describe your requirements in plain English and get production-ready architectures"
+              description="Describe requirements in plain English, get production-ready architectures"
               gradient="from-primary/20 to-primary/5"
             />
             <FeatureCard
               icon={<Layout className="w-6 h-6" />}
               title="Auto Diagram Export"
-              description="Generate professional Mermaid, PlantUML, and image exports instantly"
+              description="Generate professional diagrams and image exports instantly"
               gradient="from-accent/20 to-accent/5"
             />
             <FeatureCard
               icon={<Shield className="w-6 h-6" />}
               title="Compliance Ready"
-              description="Built-in support for SOC2, GDPR, HIPAA, and regional compliance requirements"
+              description="Built-in support for SOC2, GDPR, HIPAA requirements"
               gradient="from-warning/20 to-warning/5"
             />
             <FeatureCard
               icon={<Cpu className="w-6 h-6" />}
               title="GPU Optimization"
-              description="Compare A100, V100, T4 GPUs across clouds with TFLOPS/$ analysis"
+              description="Compare GPUs across clouds with TFLOPS/$ analysis"
               gradient="from-destructive/20 to-destructive/5"
             />
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="container mx-auto px-4 sm:px-6 py-20">
-          <div className="relative rounded-2xl overflow-hidden">
+        <div className="container mx-auto px-6 py-24">
+          <div className="relative rounded-3xl overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-info/20 to-accent/20 blur-3xl" />
-            <div className="relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 sm:p-12 text-center">
+            <div className="relative bg-card/80 backdrop-blur-xl border border-border/40 rounded-3xl p-10 sm:p-16 text-center">
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to architect smarter?</h2>
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Join thousands of developers and architects who use SolsArch to design, compare, and optimize their cloud infrastructure.
+                Join thousands of developers who use SolsArch to design, compare, and optimize their cloud infrastructure.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button onClick={() => navigate(user ? '/app/chat' : '/sign-up')} variant="hero" size="lg" className="gap-2 shadow-xl shadow-primary/25">
+                <Button onClick={() => navigate(user ? '/app/chat' : '/sign-up')} variant="hero" size="lg" className="gap-2 shadow-xl shadow-primary/30 px-8">
                   {user ? 'Open Dashboard' : 'Get Started Free'}
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </Button>
                 <Button onClick={() => navigate('/contact')} variant="outline" size="lg">
                   Contact Sales
@@ -576,23 +578,23 @@ export default function Landing() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border bg-card/30 py-12">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+      <footer className="border-t border-border/40 bg-card/30 py-16">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-info flex items-center justify-center">
-                  <Cloud className="w-4 h-4 text-primary-foreground" />
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
+                  <Cloud className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <span className="font-bold text-lg">SolsArch</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                AI-powered solutions architecture platform for the modern cloud era.
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                AI-powered solutions architecture for the modern cloud era.
               </p>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <ul className="space-y-3 text-sm text-muted-foreground">
                 <li><Link to="/guide" className="hover:text-foreground transition-colors">Documentation</Link></li>
                 <li><Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
                 <li><Link to="/about" className="hover:text-foreground transition-colors">About</Link></li>
@@ -600,7 +602,7 @@ export default function Landing() {
             </div>
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <ul className="space-y-3 text-sm text-muted-foreground">
                 <li><Link to="/about" className="hover:text-foreground transition-colors">About Us</Link></li>
                 <li><Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Careers</a></li>
@@ -608,25 +610,18 @@ export default function Landing() {
             </div>
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+              <ul className="space-y-3 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground transition-colors">Privacy</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Terms</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Security</a></li>
               </ul>
             </div>
           </div>
-          <div className="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} SolsArch. All rights reserved.
             </p>
-            <div className="flex gap-6">
-              {TRUSTED_LOGOS.map((logo) => (
-                <div key={logo.name} className="flex items-center gap-1.5 text-muted-foreground/60">
-                  <logo.icon className="w-4 h-4" />
-                  <span className="text-xs">{logo.name}</span>
-                </div>
-              ))}
-            </div>
+            <LogoStrip />
           </div>
         </div>
       </footer>
@@ -645,9 +640,9 @@ const FeatureCard = forwardRef<HTMLDivElement, FeatureCardProps>(
   ({ icon, title, description, gradient }, ref) => (
     <div
       ref={ref}
-      className={`group p-6 rounded-xl bg-gradient-to-br ${gradient} border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5`}
+      className={`group p-6 rounded-2xl bg-gradient-to-br ${gradient} border border-border/40 hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 animate-fade-in-up`}
     >
-      <div className="w-12 h-12 rounded-lg bg-card/80 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+      <div className="w-12 h-12 rounded-xl bg-card/80 border border-border/50 flex items-center justify-center text-primary mb-4 group-hover:scale-105 transition-transform">
         {icon}
       </div>
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
