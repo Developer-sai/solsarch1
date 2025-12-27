@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Requirements } from '@/types/architecture';
+import { HybridCloudConfig } from './HybridCloudConfig';
 import { 
   Rocket, 
   Users, 
@@ -18,7 +19,8 @@ import {
   DollarSign,
   ArrowRight,
   ArrowLeft,
-  Sparkles
+  Sparkles,
+  Cloud
 } from 'lucide-react';
 
 interface RequirementsWizardProps {
@@ -68,6 +70,9 @@ export const RequirementsWizard = ({ onSubmit, isLoading }: RequirementsWizardPr
     budgetMin: 500,
     budgetMax: 5000,
     additionalNotes: '',
+    hybridMode: false,
+    providerPreferences: {},
+    existingServices: [],
   });
 
   const updateRequirements = (updates: Partial<Requirements>) => {
@@ -102,7 +107,7 @@ export const RequirementsWizard = ({ onSubmit, isLoading }: RequirementsWizardPr
       {/* Progress indicator */}
       <div className="mb-8">
         <div className="flex justify-between mb-2">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3, 4, 5].map((s) => (
             <div
               key={s}
               className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all ${
@@ -113,14 +118,14 @@ export const RequirementsWizard = ({ onSubmit, isLoading }: RequirementsWizardPr
                   : 'border-border bg-card text-muted-foreground'
               }`}
             >
-              {s}
+              {s === 5 ? <Cloud className="w-4 h-4" /> : s}
             </div>
           ))}
         </div>
         <div className="h-1 bg-secondary rounded-full">
           <div 
             className="h-full bg-primary rounded-full transition-all duration-300"
-            style={{ width: `${((step - 1) / 3) * 100}%` }}
+            style={{ width: `${((step - 1) / 4) * 100}%` }}
           />
         </div>
       </div>
@@ -340,6 +345,14 @@ export const RequirementsWizard = ({ onSubmit, isLoading }: RequirementsWizardPr
         </Card>
       )}
 
+      {/* Step 5: Hybrid Cloud Config */}
+      {step === 5 && (
+        <HybridCloudConfig 
+          requirements={requirements}
+          onUpdate={(updates) => setRequirements(prev => ({ ...prev, ...updates }))}
+        />
+      )}
+
       {/* Navigation */}
       <div className="flex justify-between mt-6">
         <Button
@@ -352,7 +365,7 @@ export const RequirementsWizard = ({ onSubmit, isLoading }: RequirementsWizardPr
           Back
         </Button>
 
-        {step < 4 ? (
+        {step < 5 ? (
           <Button
             onClick={() => setStep(s => s + 1)}
             disabled={!canProceed()}
