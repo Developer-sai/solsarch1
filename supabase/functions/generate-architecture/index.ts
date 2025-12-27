@@ -5,6 +5,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ProviderPreferences {
+  storage?: string;
+  database?: string;
+  compute?: string;
+  cdn?: string;
+  cache?: string;
+  queue?: string;
+  networking?: string;
+  gpu?: string;
+  maps?: string;
+  search?: string;
+  analytics?: string;
+}
+
+interface ExistingService {
+  name: string;
+  provider: string;
+  serviceType: string;
+  description?: string;
+  monthlyCost?: number;
+}
+
 interface RequirementsInput {
   appType: string;
   expectedUsers: number;
@@ -17,6 +39,10 @@ interface RequirementsInput {
   budgetMin: number;
   budgetMax: number;
   additionalNotes: string;
+  // Hybrid multi-cloud support
+  hybridMode?: boolean;
+  providerPreferences?: ProviderPreferences;
+  existingServices?: ExistingService[];
 }
 
 serve(async (req) => {
@@ -32,9 +58,36 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Build hybrid mode context
+    let hybridContext = '';
+    if (requirements.hybridMode) {
+      hybridContext = `
+HYBRID MULTI-CLOUD MODE ENABLED:
+The user wants a hybrid architecture using multiple cloud providers for different services.
+
+Provider Preferences:
+${Object.entries(requirements.providerPreferences || {})
+  .filter(([_, v]) => v && v !== 'best')
+  .map(([k, v]) => `- ${k}: Must use ${v}`)
+  .join('\n') || '- No specific preferences, optimize for best cost per service'}
+
+Existing Services to Include:
+${(requirements.existingServices || [])
+  .map(s => `- ${s.name} (${s.provider}): ${s.serviceType}${s.monthlyCost ? ` - $${s.monthlyCost}/mo` : ''}`)
+  .join('\n') || '- None specified'}
+
+IMPORTANT FOR HYBRID MODE:
+1. For each component, set "selectedProvider" to the optimal or preferred provider
+2. Include existing services as components with "isExternal": true
+3. Generate a 4th variant called "hybrid-optimized" that picks the best provider per component
+4. Calculate "hybridTotalCost" as the sum of selected provider costs
+5. Include "hybridBreakdown" showing cost per provider used
+`;
+    }
+
     const systemPrompt = `You are an expert cloud solutions architect with deep knowledge of AWS, Azure, GCP, and OCI. 
     
-Generate exactly 3 architecture variants for the given requirements. Return a valid JSON object with this exact structure:
+Generate architecture variants for the given requirements. Return a valid JSON object with this exact structure:
 
 {
   "architectures": [
@@ -45,18 +98,26 @@ Generate exactly 3 architecture variants for the given requirements. Return a va
       "components": [
         {
           "name": "Component Name",
-          "serviceType": "compute|database|storage|networking|cache|queue|cdn|gpu",
+          "serviceType": "compute|database|storage|networking|cache|queue|cdn|gpu|maps|search|analytics",
           "providers": {
             "aws": { "service": "EC2", "sku": "t3.medium", "monthlyCost": 30 },
             "azure": { "service": "Virtual Machines", "sku": "B2s", "monthlyCost": 28 },
             "gcp": { "service": "Compute Engine", "sku": "e2-medium", "monthlyCost": 25 },
             "oci": { "service": "Compute", "sku": "VM.Standard.E4.Flex", "monthlyCost": 20 }
-          }
+          },
+          "selectedProvider": "oci",
+          "isExternal": false
         }
       ],
       "assumptions": ["Assumption 1", "Assumption 2"],
       "tradeOffs": ["Trade-off 1", "Trade-off 2"],
-      "totalCosts": { "aws": 500, "azure": 480, "gcp": 450, "oci": 400 }
+      "totalCosts": { "aws": 500, "azure": 480, "gcp": 450, "oci": 400 },
+      "hybridTotalCost": 380,
+      "hybridBreakdown": [
+        { "provider": "aws", "components": ["Storage"], "cost": 50 },
+        { "provider": "azure", "components": ["Database"], "cost": 120 },
+        { "provider": "gcp", "components": ["Compute", "CDN"], "cost": 210 }
+      ]
     },
     {
       "variant": "balanced",
@@ -65,7 +126,9 @@ Generate exactly 3 architecture variants for the given requirements. Return a va
       "components": [...],
       "assumptions": [...],
       "tradeOffs": [...],
-      "totalCosts": {...}
+      "totalCosts": {...},
+      "hybridTotalCost": 500,
+      "hybridBreakdown": [...]
     },
     {
       "variant": "performance-optimized", 
@@ -74,30 +137,54 @@ Generate exactly 3 architecture variants for the given requirements. Return a va
       "components": [...],
       "assumptions": [...],
       "tradeOffs": [...],
-      "totalCosts": {...}
-    }
+      "totalCosts": {...},
+      "hybridTotalCost": 800,
+      "hybridBreakdown": [...]
+    }${requirements.hybridMode ? `,
+    {
+      "variant": "hybrid-optimized",
+      "name": "Hybrid Multi-Cloud Architecture",
+      "description": "Optimized selection of best provider per service type",
+      "components": [...],
+      "assumptions": ["Uses multiple cloud providers for optimal cost/performance", "Requires multi-cloud networking setup"],
+      "tradeOffs": ["Increased operational complexity", "Need expertise in multiple clouds"],
+      "totalCosts": {...},
+      "hybridTotalCost": 350,
+      "hybridBreakdown": [...]
+    }` : ''}
   ],
   "mermaidDiagram": "graph TD\\n    LB[Load Balancer] --> WS[Web Server]\\n    WS --> API[API Gateway]\\n    API --> APP[App Server]\\n    APP --> CACHE[(Redis)]\\n    APP --> DB[(Database)]\\n    APP --> QUEUE[Queue]\\n    QUEUE --> WORKER[Workers]\\n    CDN[CDN] --> LB",
   "recommendations": [
     {
-      "type": "cost-saving",
+      "type": "cost-saving|performance|security|reliability",
       "title": "Use Reserved Instances",
       "description": "Save up to 40% with 1-year commitment",
       "impactPercentage": 40,
       "priority": "high"
     }
-  ]
+  ]${requirements.hybridMode ? `,
+  "hybridArchitecture": {
+    "variant": "hybrid-optimized",
+    "name": "Recommended Hybrid Configuration",
+    "description": "Best-of-breed selection across providers respecting user preferences",
+    "components": [...],
+    "assumptions": [...],
+    "tradeOffs": [...],
+    "totalCosts": {...},
+    "hybridTotalCost": 350,
+    "hybridBreakdown": [...]
+  }` : ''}
 }
 
-CRITICAL: For mermaidDiagram:
-- Use simple node IDs without special characters (letters and numbers only)
-- Use --> for arrows
-- Use [...] for rectangular nodes and [(...)] for database/cylinder nodes
-- Keep node labels short and simple (no special characters, no parentheses in labels)
-- Use \\n for newlines in the JSON string
-- Example: "graph TD\\n    A[Load Balancer] --> B[Server]\\n    B --> C[(Database)]"
+${hybridContext}
 
-Be realistic with pricing based on current 2024 cloud pricing. Include GPU instances if the app type involves AI/ML.`;
+CRITICAL RULES:
+1. For mermaidDiagram: Use simple node IDs (letters and numbers only), use --> for arrows, [...] for rectangles, [(...)] for databases
+2. Be realistic with pricing based on current 2024-2025 cloud pricing
+3. Include GPU instances if the app type involves AI/ML
+4. For hybrid mode: ALWAYS set selectedProvider on each component and calculate hybridTotalCost
+5. Include external/third-party services (like Google Maps, Twilio, Stripe) when mentioned
+6. For external services, set isExternal: true and include externalService object with provider, service, and monthlyCost`;
 
     const userPrompt = `Design cloud architectures for:
 - App Type: ${requirements.appType}
@@ -110,10 +197,16 @@ Be realistic with pricing based on current 2024 cloud pricing. Include GPU insta
 - Compliance: ${requirements.compliance.join(', ') || 'None specified'}
 - Monthly Budget: $${requirements.budgetMin} - $${requirements.budgetMax}
 - Additional Notes: ${requirements.additionalNotes || 'None'}
+${requirements.hybridMode ? `
+- HYBRID MODE: ENABLED
+- Provider Preferences: ${JSON.stringify(requirements.providerPreferences || {})}
+- Existing Services: ${JSON.stringify(requirements.existingServices || [])}
+` : ''}
 
 Return ONLY valid JSON, no markdown formatting.`;
 
     console.log("Calling Lovable AI Gateway...");
+    console.log("Hybrid mode:", requirements.hybridMode);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -171,6 +264,42 @@ Return ONLY valid JSON, no markdown formatting.`;
       console.error("JSON parse error:", parseError);
       console.log("Raw content:", cleanedContent.substring(0, 500));
       throw new Error("Failed to parse AI response as JSON");
+    }
+
+    // Post-process for hybrid mode - ensure all required fields exist
+    if (requirements.hybridMode && architectureResult.architectures) {
+      architectureResult.architectures = architectureResult.architectures.map((arch: any) => {
+        // Calculate hybrid costs if not provided
+        if (!arch.hybridTotalCost && arch.components) {
+          let hybridTotal = 0;
+          const breakdown: Record<string, { cost: number; components: string[] }> = {};
+          
+          arch.components.forEach((comp: any) => {
+            if (comp.isExternal && comp.externalService) {
+              const provider = comp.externalService.provider;
+              if (!breakdown[provider]) breakdown[provider] = { cost: 0, components: [] };
+              breakdown[provider].cost += comp.externalService.monthlyCost || 0;
+              breakdown[provider].components.push(comp.name);
+              hybridTotal += comp.externalService.monthlyCost || 0;
+            } else {
+              const provider = comp.selectedProvider || 'aws';
+              const cost = comp.providers?.[provider]?.monthlyCost || 0;
+              if (!breakdown[provider]) breakdown[provider] = { cost: 0, components: [] };
+              breakdown[provider].cost += cost;
+              breakdown[provider].components.push(comp.name);
+              hybridTotal += cost;
+            }
+          });
+          
+          arch.hybridTotalCost = hybridTotal;
+          arch.hybridBreakdown = Object.entries(breakdown).map(([provider, data]) => ({
+            provider,
+            components: data.components,
+            cost: data.cost,
+          }));
+        }
+        return arch;
+      });
     }
 
     return new Response(JSON.stringify(architectureResult), {
