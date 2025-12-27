@@ -29,7 +29,24 @@ import {
   Box,
   Workflow,
   Play,
-  Star
+  Star,
+  Clock,
+  DollarSign,
+  Target,
+  Rocket,
+  HeartPulse,
+  Gamepad2,
+  Brain,
+  CreditCard,
+  ShoppingCart,
+  TrendingUp,
+  FileSpreadsheet,
+  FileText,
+  GitCompare,
+  Timer,
+  Cpu,
+  XCircle,
+  Check
 } from 'lucide-react';
 
 const TRUSTED_LOGOS = [
@@ -39,20 +56,126 @@ const TRUSTED_LOGOS = [
   { name: 'Oracle', icon: Database },
 ];
 
-const DIAGRAM_TYPES = [
-  { name: 'Cloud Architecture', icon: Cloud, description: 'AWS, Azure, GCP, OCI diagrams' },
-  { name: 'Network Topology', icon: Network, description: 'VPCs, subnets, security groups' },
-  { name: 'Data Flow', icon: Workflow, description: 'ETL pipelines, streaming' },
-  { name: 'Sequence Diagrams', icon: GitBranch, description: 'API flows, integrations' },
-  { name: 'C4 Model', icon: Box, description: 'Context, container, component' },
-  { name: 'Microservices', icon: Layers, description: 'Service mesh, containers' },
+const PROBLEMS = [
+  { icon: FileSpreadsheet, text: 'Spreadsheet-based cost comparisons' },
+  { icon: Layout, text: 'Manual diagram creation' },
+  { icon: GitBranch, text: 'No version control for architectures' },
+  { icon: Target, text: 'Vendor-biased recommendations' },
+  { icon: Clock, text: 'Outdated pricing data' },
+  { icon: FileCode2, text: 'Copy-pasted Terraform templates' },
 ];
 
-const ENTERPRISE_FEATURES = [
-  { title: 'SOC 2 Compliant', icon: Shield, description: 'Enterprise security standards' },
-  { title: 'Team Collaboration', icon: Users, description: 'Share & collaborate on designs' },
-  { title: 'API Access', icon: FileCode2, description: 'Integrate with your CI/CD' },
-  { title: 'SSO & SAML', icon: Building2, description: 'Enterprise authentication' },
+const TARGET_CUSTOMERS = [
+  {
+    title: 'Tech Startups',
+    icon: Rocket,
+    problem: 'Limited budget, need to ship fast, can\'t afford surprise cloud bills',
+    solution: 'AI generates cost-optimized architectures in minutes with real prices',
+    benefits: ['3 variants in 60 seconds', 'Cost-optimized designs', 'Multi-cloud options', 'Export Terraform instantly'],
+    roi: 'Save 40+ hours of architecture design',
+    color: 'from-primary/20 to-primary/5'
+  },
+  {
+    title: 'Enterprise IT Teams',
+    icon: Building2,
+    problem: 'Complex governance, multi-cloud sprawl, manual compliance checks',
+    solution: 'Consistent architectures with compliance built-in',
+    benefits: ['SOC2, HIPAA, PCI-DSS filters', '4 providers compared', 'Version control', 'Team collaboration'],
+    roi: 'Reduce architecture review cycles by 60%',
+    color: 'from-info/20 to-info/5'
+  },
+  {
+    title: 'Consulting & MSPs',
+    icon: Users,
+    problem: 'Create proposals for multiple clients with different cloud preferences',
+    solution: 'Generate professional architecture docs with real pricing',
+    benefits: ['Instant proposals', 'All 4 major clouds', 'PDF/Markdown exports', 'White-label ready'],
+    roi: 'Handle 3x more client engagements',
+    color: 'from-success/20 to-success/5'
+  },
+  {
+    title: 'SaaS Companies',
+    icon: Layers,
+    problem: 'Need multi-tenant architectures, scaling plans, GPU cost control',
+    solution: 'Production-ready patterns with growth projections',
+    benefits: ['Multi-tenancy patterns', 'GPU dashboard', '3 scaling variants', 'Continuous optimization'],
+    roi: 'Reduce cloud spend by 20-30%',
+    color: 'from-accent/20 to-accent/5'
+  },
+  {
+    title: 'FinTech & Healthcare',
+    icon: HeartPulse,
+    problem: 'Strict compliance, audit trails, can\'t use random cloud configs',
+    solution: 'Compliant architectures with full documentation',
+    benefits: ['HIPAA/PCI-DSS ready', 'Audit trail logs', 'Security-first design', 'Detailed documentation'],
+    roi: 'Pass audits faster, avoid compliance fines',
+    color: 'from-warning/20 to-warning/5'
+  },
+  {
+    title: 'AI/ML Teams',
+    icon: Brain,
+    problem: 'GPU costs are insane, need to compare A100 vs V100 vs T4',
+    solution: 'GPU-focused pricing and optimization dashboard',
+    benefits: ['20+ GPU SKUs', 'TFLOPS/$ analysis', 'Spot instance savings', 'Multi-cloud GPU compare'],
+    roi: 'Cut GPU costs by 40% with spot + rightsizing',
+    color: 'from-destructive/20 to-destructive/5'
+  },
+];
+
+const USE_CASES = [
+  {
+    industry: 'E-commerce',
+    icon: ShoppingCart,
+    quote: '"I need a scalable shop that handles Black Friday spikes under $5K/month"',
+    output: 'Auto-scaling compute, managed DB, CDN, queue-based order processing across 4 clouds'
+  },
+  {
+    industry: 'Healthcare Platform',
+    icon: HeartPulse,
+    quote: '"HIPAA-compliant patient portal with encrypted data"',
+    output: 'Compliant architecture with encryption, audit logging, private subnets, BAA-eligible services'
+  },
+  {
+    industry: 'Gaming Backend',
+    icon: Gamepad2,
+    quote: '"Real-time multiplayer with low latency globally"',
+    output: 'Edge compute, global load balancers, in-memory cache, WebSocket servers'
+  },
+  {
+    industry: 'ML Training Pipeline',
+    icon: Brain,
+    quote: '"Train models on 8x A100 GPUs with cost control"',
+    output: 'Spot GPU instances, auto-scaling, checkpoint storage, cost alerts'
+  },
+  {
+    industry: 'Fintech Payments',
+    icon: CreditCard,
+    quote: '"PCI-DSS compliant payment processing"',
+    output: 'Isolated VPCs, encrypted transit, WAF, compliant database configurations'
+  },
+];
+
+const COMPARISON_DATA = [
+  { painPoint: 'Architecture design', traditional: '2-5 days', solsarch: '5 minutes' },
+  { painPoint: 'Cost comparison', traditional: '4 spreadsheets', solsarch: '1 click' },
+  { painPoint: 'Diagram creation', traditional: '2-3 hours', solsarch: 'Auto-generated' },
+  { painPoint: 'IaC writing', traditional: '8+ hours', solsarch: 'Instant export' },
+  { painPoint: 'Version tracking', traditional: 'None / Git chaos', solsarch: 'Built-in' },
+  { painPoint: 'Pricing accuracy', traditional: 'Outdated', solsarch: 'Real SKU catalog' },
+];
+
+const COMPETITORS = [
+  { name: 'Lucidchart', advantage: 'We generate architectures + pricing, not just diagrams' },
+  { name: 'Cloudcraft', advantage: 'We support 4 clouds, not just AWS' },
+  { name: 'AWS Calculator', advantage: 'We compare all providers, not just one' },
+  { name: 'Manual design', advantage: 'AI does 40 hours of work in 5 minutes' },
+  { name: 'Consulting firms', advantage: '$0 vs $50K+ for architecture consulting' },
+];
+
+const STATS = [
+  { value: '40+', label: 'Hours saved per architecture', icon: Clock },
+  { value: '20-40%', label: 'Cloud spend savings', icon: DollarSign },
+  { value: '4', label: 'Clouds compared fairly', icon: Globe },
 ];
 
 export default function Landing() {
@@ -162,7 +285,7 @@ export default function Landing() {
             </h1>
             
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mb-8 px-2 animate-fade-in-up leading-relaxed" style={{ animationDelay: "0.2s" }}>
-              Design production-ready cloud architectures in seconds. Generate diagrams, compare costs across AWS, Azure, GCP, and OCI — all powered by AI.
+              Design production-ready cloud architectures in seconds. Compare costs across AWS, Azure, GCP, and OCI. Export Terraform, diagrams, and docs — all powered by AI.
             </p>
 
             {/* CTA Buttons */}
@@ -194,41 +317,202 @@ export default function Landing() {
               )}
             </div>
 
-            {/* Quick Features */}
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-muted-foreground mb-16 animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                <span>No credit card required</span>
+            {/* Quick Stats */}
+            <div className="flex flex-wrap items-center justify-center gap-8 mb-16 animate-fade-in-up" style={{ animationDelay: "0.35s" }}>
+              {STATS.map((stat) => (
+                <div key={stat.label} className="flex items-center gap-3 px-6 py-3 rounded-xl bg-card/50 border border-border/50">
+                  <stat.icon className="w-5 h-5 text-primary" />
+                  <div className="text-left">
+                    <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                    <div className="text-xs text-muted-foreground">{stat.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* The Problem Section */}
+        <div className="border-y border-border/50 bg-destructive/5">
+          <div className="container mx-auto px-4 sm:px-6 py-16">
+            <div className="text-center mb-12">
+              <Badge variant="destructive" className="mb-4">THE PROBLEM</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Cloud Architecture is Broken</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Companies spend weeks designing cloud infrastructure, manually comparing prices, and writing IaC from scratch.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              {PROBLEMS.map((problem) => (
+                <div 
+                  key={problem.text}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-card/50 border border-destructive/20"
+                >
+                  <XCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground">{problem.text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-10">
+              <p className="text-xl font-semibold text-primary">SolsArch fixes all of this.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Who Needs SolsArch Section */}
+        <div className="container mx-auto px-4 sm:px-6 py-20">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4">TARGET CUSTOMERS</Badge>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Built for Teams That Ship</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              From startup to enterprise, SolsArch accelerates your cloud architecture workflow
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {TARGET_CUSTOMERS.map((customer, index) => (
+              <div 
+                key={customer.title}
+                className={`p-6 rounded-xl bg-gradient-to-br ${customer.color} border border-border/50 hover:border-primary/30 transition-all group animate-fade-in-up`}
+                style={{ animationDelay: `${0.1 * index}s` }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-lg bg-card/80 flex items-center justify-center">
+                    <customer.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-bold">{customer.title}</h3>
+                </div>
+                
+                <p className="text-sm text-muted-foreground mb-4">{customer.problem}</p>
+                
+                <div className="space-y-2 mb-4">
+                  {customer.benefits.map((benefit) => (
+                    <div key={benefit} className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
+                      <span>{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-4 border-t border-border/50">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-success" />
+                    <span className="text-sm font-medium text-success">{customer.roi}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                <span>50 free diagrams/month</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                <span>Export to PDF, PNG, Markdown</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Comparison Table Section */}
+        <div className="border-y border-border/50 bg-secondary/20">
+          <div className="container mx-auto px-4 sm:px-6 py-20">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4">COMPARISON</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">What SolsArch Solves</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                See the difference between traditional architecture workflows and SolsArch
+              </p>
+            </div>
+
+            <div className="max-w-3xl mx-auto">
+              <div className="rounded-xl overflow-hidden border border-border/50">
+                <div className="grid grid-cols-3 bg-card/80 p-4 font-semibold border-b border-border/50">
+                  <div>Pain Point</div>
+                  <div className="text-center text-muted-foreground">Traditional</div>
+                  <div className="text-center text-primary">With SolsArch</div>
+                </div>
+                {COMPARISON_DATA.map((row, index) => (
+                  <div 
+                    key={row.painPoint} 
+                    className={`grid grid-cols-3 p-4 ${index % 2 === 0 ? 'bg-card/30' : 'bg-card/50'}`}
+                  >
+                    <div className="font-medium">{row.painPoint}</div>
+                    <div className="text-center text-muted-foreground">{row.traditional}</div>
+                    <div className="text-center text-primary font-medium">{row.solsarch}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Diagram Types Section */}
-        <div className="container mx-auto px-4 sm:px-6 pb-16">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3">Generate Any Architecture Diagram</h2>
-            <p className="text-muted-foreground">From simple cloud diagrams to complex enterprise architectures</p>
+        {/* Use Cases Section */}
+        <div className="container mx-auto px-4 sm:px-6 py-20">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4">USE CASES</Badge>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Real-World Examples</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              See how SolsArch handles complex architecture requirements across industries
+            </p>
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-            {DIAGRAM_TYPES.map((type, index) => (
-              <DiagramTypeCard key={type.name} type={type} index={index} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {USE_CASES.map((useCase, index) => (
+              <div 
+                key={useCase.industry}
+                className="p-6 rounded-xl bg-card/50 border border-border/50 hover:border-primary/30 transition-all animate-fade-in-up"
+                style={{ animationDelay: `${0.1 * index}s` }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <useCase.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="font-bold">{useCase.industry}</h3>
+                </div>
+                
+                <p className="text-sm italic text-muted-foreground mb-4">{useCase.quote}</p>
+                
+                <div className="p-3 rounded-lg bg-success/10 border border-success/20">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-foreground">{useCase.output}</p>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
 
+        {/* Competitive Advantage Section */}
+        <div className="border-y border-border/50 bg-primary/5">
+          <div className="container mx-auto px-4 sm:px-6 py-20">
+            <div className="text-center mb-12">
+              <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">COMPETITIVE EDGE</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Why Choose SolsArch?</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                See how we compare to traditional tools and consulting
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              {COMPETITORS.map((comp) => (
+                <div 
+                  key={comp.name}
+                  className="p-5 rounded-xl bg-card/50 border border-border/50"
+                >
+                  <div className="text-sm text-muted-foreground mb-2">vs. {comp.name}</div>
+                  <p className="font-medium">{comp.advantage}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Main Features Grid */}
-        <div className="container mx-auto px-4 sm:px-6 pb-20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up" style={{ animationDelay: "0.45s" }}>
+        <div className="container mx-auto px-4 sm:px-6 py-20">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4">FEATURES</Badge>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Everything You Need</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Powerful features for modern cloud architecture design
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <FeatureCard
               icon={<Globe className="w-6 h-6" />}
               title="Multi-Cloud Support"
@@ -260,40 +544,11 @@ export default function Landing() {
               gradient="from-warning/20 to-warning/5"
             />
             <FeatureCard
-              icon={<Layers className="w-6 h-6" />}
-              title="Enterprise Scale"
-              description="From microservices to monoliths, design architectures that scale to millions"
+              icon={<Cpu className="w-6 h-6" />}
+              title="GPU Optimization"
+              description="Compare A100, V100, T4 GPUs across clouds with TFLOPS/$ analysis"
               gradient="from-destructive/20 to-destructive/5"
             />
-          </div>
-        </div>
-
-        {/* Enterprise Features */}
-        <div className="border-y border-border/50 bg-secondary/20">
-          <div className="container mx-auto px-4 sm:px-6 py-16">
-            <div className="text-center mb-12">
-              <Badge variant="outline" className="mb-4">ENTERPRISE</Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Built for Enterprise Teams</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Security, compliance, and collaboration features that scale with your organization
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {ENTERPRISE_FEATURES.map((feature, index) => (
-                <div 
-                  key={feature.title}
-                  className="p-6 rounded-xl bg-card/50 border border-border/50 hover:border-primary/30 transition-all group animate-fade-in-up"
-                  style={{ animationDelay: `${0.5 + index * 0.1}s` }}
-                >
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/20 transition-colors">
-                    <feature.icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -332,7 +587,7 @@ export default function Landing() {
                 <span className="font-bold text-lg">SolsArch</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                AI-powered solution architecture platform for the modern cloud era.
+                AI-powered solutions architecture platform for the modern cloud era.
               </p>
             </div>
             <div>
@@ -360,12 +615,17 @@ export default function Landing() {
               </ul>
             </div>
           </div>
-          <div className="pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">© 2024 SolsArch. All rights reserved.</p>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>Powered by AI</span>
-              <span className="text-primary">•</span>
-              <span>Multi-Cloud Ready</span>
+          <div className="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} SolsArch. All rights reserved.
+            </p>
+            <div className="flex gap-6">
+              {TRUSTED_LOGOS.map((logo) => (
+                <div key={logo.name} className="flex items-center gap-1.5 text-muted-foreground/60">
+                  <logo.icon className="w-4 h-4" />
+                  <span className="text-xs">{logo.name}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -374,41 +634,26 @@ export default function Landing() {
   );
 }
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-  gradient,
-}: {
+interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
   gradient: string;
-}) {
-  return (
-    <div className="group relative p-6 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/40 transition-all duration-300 overflow-hidden">
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-      <div className="relative">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/20 transition-colors">
-          {icon}
-        </div>
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
-      </div>
-    </div>
-  );
 }
 
-function DiagramTypeCard({ type, index }: { type: typeof DIAGRAM_TYPES[0]; index: number }) {
-  return (
-    <div 
-      className="group p-4 rounded-xl bg-card/50 border border-border/50 hover:border-primary/40 hover:bg-card/80 transition-all text-center cursor-pointer"
+const FeatureCard = forwardRef<HTMLDivElement, FeatureCardProps>(
+  ({ icon, title, description, gradient }, ref) => (
+    <div
+      ref={ref}
+      className={`group p-6 rounded-xl bg-gradient-to-br ${gradient} border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5`}
     >
-      <div className="w-10 h-10 mx-auto rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-3 group-hover:bg-primary/20 transition-colors">
-        <type.icon className="w-5 h-5" />
+      <div className="w-12 h-12 rounded-lg bg-card/80 flex items-center justify-center text-primary mb-4 group-hover:scale-110 transition-transform">
+        {icon}
       </div>
-      <h3 className="font-medium text-sm mb-1">{type.name}</h3>
-      <p className="text-xs text-muted-foreground">{type.description}</p>
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </div>
-  );
-}
+  )
+);
+
+FeatureCard.displayName = 'FeatureCard';
