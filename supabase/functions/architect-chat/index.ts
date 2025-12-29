@@ -279,9 +279,12 @@ When asked to generate a complete architecture JSON, respond with ONLY valid JSO
     });
 
   } catch (error) {
+    // Log detailed error server-side only
     console.error("Error in architect-chat function:", error);
+    
+    // Return generic message to client (avoid leaking internal details)
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Unknown error occurred" 
+      error: "Unable to process your request. Please try again."
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

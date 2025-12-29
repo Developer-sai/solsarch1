@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Network, RefreshCw, Maximize2, Download, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import mermaid from 'mermaid';
+import DOMPurify from 'dompurify';
 import {
   Dialog,
   DialogContent,
@@ -262,7 +263,14 @@ export const ArchitectureDiagram = memo(({ diagram, variant, className }: Archit
 
   useEffect(() => {
     if (containerRef.current && svgContent) {
-      containerRef.current.innerHTML = svgContent;
+      // Sanitize SVG to prevent XSS attacks
+      const sanitizedSvg = DOMPurify.sanitize(svgContent, {
+        USE_PROFILES: { svg: true, svgFilters: true },
+        ADD_TAGS: ['use'],
+        FORBID_TAGS: ['script', 'style'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+      });
+      containerRef.current.innerHTML = sanitizedSvg;
       const svgElement = containerRef.current.querySelector('svg');
       if (svgElement) {
         svgElement.style.maxWidth = '100%';
@@ -277,7 +285,14 @@ export const ArchitectureDiagram = memo(({ diagram, variant, className }: Archit
 
   useEffect(() => {
     if (isFullscreenOpen && fullscreenContainerRef.current && svgContent) {
-      fullscreenContainerRef.current.innerHTML = svgContent;
+      // Sanitize SVG for fullscreen view as well
+      const sanitizedSvg = DOMPurify.sanitize(svgContent, {
+        USE_PROFILES: { svg: true, svgFilters: true },
+        ADD_TAGS: ['use'],
+        FORBID_TAGS: ['script', 'style'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+      });
+      fullscreenContainerRef.current.innerHTML = sanitizedSvg;
       const svgElement = fullscreenContainerRef.current.querySelector('svg');
       if (svgElement) {
         svgElement.style.maxWidth = '100%';

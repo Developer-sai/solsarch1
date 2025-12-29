@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { OrganizationProvider } from "@/hooks/useOrganization";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 // Public pages
 import Landing from "./pages/Landing";
@@ -48,7 +49,11 @@ const App = () => (
               <Route path="/guide" element={<Guide />} />
               
               {/* App routes (authenticated) */}
-              <Route path="/app" element={<AppLayout />}>
+              <Route path="/app" element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }>
                 <Route index element={<AppDashboard />} />
                 <Route path="chat" element={<AppChat />} />
                 <Route path="chat/:conversationId" element={<AppChat />} />
