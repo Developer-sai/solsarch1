@@ -16,16 +16,16 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, mode, stream = true } = await req.json() as { 
-      messages: ChatMessage[]; 
+    const { messages, mode, stream = true } = await req.json() as {
+      messages: ChatMessage[];
       mode: 'chat' | 'generate' | 'analyze';
       stream?: boolean;
     };
-    
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+
+    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+
+    if (!GOOGLE_AI_API_KEY) {
+      throw new Error("GOOGLE_AI_API_KEY is not configured");
     }
 
     const systemPrompt = `You are SolsArch, an elite Solutions Architect with 20+ years of experience designing enterprise-grade systems of ALL types. You are NOT just a cloud architect - you are a comprehensive software and systems architect who can design ANY type of application or system.
@@ -163,27 +163,34 @@ When asked to generate a complete architecture JSON, respond with ONLY valid JSO
       });
     }
 
-    console.log("Calling Lovable AI Gateway for chat... stream:", stream);
+    console.log("Calling Google AI API for chat... stream:", stream);
 
     // For generate mode, we don't stream (need complete JSON)
     if (mode === 'generate' || !stream) {
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const systemMessage = apiMessages.find(m => m.role === 'system');
+      const userMessages = apiMessages.filter(m => m.role !== 'system');
+
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
+          "x-goog-api-key": GOOGLE_AI_API_KEY,
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: apiMessages,
-          stream: false,
+          contents: userMessages.map(m => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.content }]
+          })),
+          systemInstruction: systemMessage ? {
+            parts: [{ text: systemMessage.content }]
+          } : undefined,
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error("AI Gateway error:", response.status, errorText);
-        
+
         if (response.status === 429) {
           return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
             status: 429,
@@ -200,8 +207,8 @@ When asked to generate a complete architecture JSON, respond with ONLY valid JSO
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
-      
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
       if (!content) {
         throw new Error("No content in AI response");
       }
@@ -213,51 +220,58 @@ When asked to generate a complete architecture JSON, respond with ONLY valid JSO
             .replace(/```json\n?/g, '')
             .replace(/```\n?/g, '')
             .trim();
-          
+
           const architectureResult = JSON.parse(cleanedContent);
-          return new Response(JSON.stringify({ 
+          return new Response(JSON.stringify({
             type: 'architecture',
-            data: architectureResult 
+            data: architectureResult
           }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         } catch (parseError) {
           console.error("JSON parse error:", parseError);
-          return new Response(JSON.stringify({ 
+          return new Response(JSON.stringify({
             type: 'message',
-            content: content 
+            content: content
           }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       }
 
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         type: 'message',
-        content: content 
+        content: content
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // Streaming mode for chat
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const systemMessage = apiMessages.find(m => m.role === 'system');
+    const userMessages = apiMessages.filter(m => m.role !== 'system');
+
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?alt=sse", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
+        "x-goog-api-key": GOOGLE_AI_API_KEY,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: apiMessages,
-        stream: true,
+        contents: userMessages.map(m => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.content }]
+        })),
+        systemInstruction: systemMessage ? {
+          parts: [{ text: systemMessage.content }]
+        } : undefined,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI Gateway error:", response.status, errorText);
-      
+
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
           status: 429,
@@ -281,9 +295,9 @@ When asked to generate a complete architecture JSON, respond with ONLY valid JSO
   } catch (error) {
     // Log detailed error server-side only
     console.error("Error in architect-chat function:", error);
-    
+
     // Return generic message to client (avoid leaking internal details)
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: "Unable to process your request. Please try again."
     }), {
       status: 500,

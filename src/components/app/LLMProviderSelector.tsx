@@ -19,9 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Settings2, 
-  Sparkles, 
+import {
+  Settings2,
+  Sparkles,
   Check,
   Zap,
   Brain,
@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export type LLMProvider = 'lovable' | 'openai' | 'anthropic' | 'google' | 'groq' | 'ollama' | 'custom';
+export type LLMProvider = 'google' | 'openai' | 'anthropic' | 'groq' | 'ollama' | 'custom';
 
 interface LLMModel {
   id: string;
@@ -53,17 +53,15 @@ interface LLMProviderConfig {
 
 const LLM_PROVIDERS: LLMProviderConfig[] = [
   {
-    id: 'lovable',
-    name: 'Lovable AI',
-    icon: <Sparkles className="w-5 h-5" />,
-    description: 'Built-in AI with no API key required. Best for most users.',
+    id: 'google',
+    name: 'Google AI',
+    icon: <Globe className="w-5 h-5" />,
+    description: 'Built-in Google AI with no API key required. Best for most users.',
     requiresApiKey: false,
     models: [
-      { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast & balanced', contextLength: 1000000 },
-      { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Most powerful', contextLength: 1000000, supportsVision: true },
-      { id: 'google/gemini-2.5-flash-lite', name: 'Gemini Flash Lite', description: 'Fastest, cheapest', contextLength: 1000000 },
-      { id: 'openai/gpt-5', name: 'GPT-5', description: 'OpenAI flagship', contextLength: 128000, supportsVision: true },
-      { id: 'openai/gpt-5-mini', name: 'GPT-5 Mini', description: 'Fast & capable', contextLength: 128000 },
+      { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash', description: 'Latest & fastest', contextLength: 1000000, supportsVision: true },
+      { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Most capable', contextLength: 2000000, supportsVision: true },
+      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast & efficient', contextLength: 1000000 },
     ],
   },
   {
@@ -91,18 +89,7 @@ const LLM_PROVIDERS: LLMProviderConfig[] = [
       { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Fast & cheap', contextLength: 200000 },
     ],
   },
-  {
-    id: 'google',
-    name: 'Google AI',
-    icon: <Globe className="w-5 h-5" />,
-    description: 'Direct Google AI access. Requires API key.',
-    requiresApiKey: true,
-    models: [
-      { id: 'gemini-2.0-flash-exp', name: 'Gemini 2.0 Flash', description: 'Latest model', contextLength: 1000000, supportsVision: true },
-      { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Most capable', contextLength: 2000000, supportsVision: true },
-      { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast & efficient', contextLength: 1000000 },
-    ],
-  },
+
   {
     id: 'groq',
     name: 'Groq',

@@ -52,10 +52,10 @@ serve(async (req) => {
 
   try {
     const { requirements } = await req.json() as { requirements: RequirementsInput };
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+
+    if (!GOOGLE_AI_API_KEY) {
+      throw new Error("GOOGLE_AI_API_KEY is not configured");
     }
 
     // Build hybrid mode context
@@ -67,14 +67,14 @@ The user wants a hybrid architecture using multiple cloud providers for differen
 
 Provider Preferences:
 ${Object.entries(requirements.providerPreferences || {})
-  .filter(([_, v]) => v && v !== 'best')
-  .map(([k, v]) => `- ${k}: Must use ${v}`)
-  .join('\n') || '- No specific preferences, optimize for best cost per service'}
+          .filter(([_, v]) => v && v !== 'best')
+          .map(([k, v]) => `- ${k}: Must use ${v}`)
+          .join('\n') || '- No specific preferences, optimize for best cost per service'}
 
 Existing Services to Include:
 ${(requirements.existingServices || [])
-  .map(s => `- ${s.name} (${s.provider}): ${s.serviceType}${s.monthlyCost ? ` - $${s.monthlyCost}/mo` : ''}`)
-  .join('\n') || '- None specified'}
+          .map(s => `- ${s.name} (${s.provider}): ${s.serviceType}${s.monthlyCost ? ` - $${s.monthlyCost}/mo` : ''}`)
+          .join('\n') || '- None specified'}
 
 IMPORTANT FOR HYBRID MODE:
 1. For each component, set "selectedProvider" to the optimal or preferred provider
@@ -205,28 +205,32 @@ ${requirements.hybridMode ? `
 
 Return ONLY valid JSON, no markdown formatting.`;
 
-    console.log("Calling Lovable AI Gateway...");
+    console.log("Calling Google AI API...");
     console.log("Hybrid mode:", requirements.hybridMode);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
+        "x-goog-api-key": GOOGLE_AI_API_KEY,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: userPrompt }]
+          }
         ],
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
+        },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI Gateway error:", response.status, errorText);
-      
+
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
           status: 429,
@@ -243,8 +247,8 @@ Return ONLY valid JSON, no markdown formatting.`;
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-    
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
     if (!content) {
       throw new Error("No content in AI response");
     }
@@ -273,7 +277,7 @@ Return ONLY valid JSON, no markdown formatting.`;
         if (!arch.hybridTotalCost && arch.components) {
           let hybridTotal = 0;
           const breakdown: Record<string, { cost: number; components: string[] }> = {};
-          
+
           arch.components.forEach((comp: any) => {
             if (comp.isExternal && comp.externalService) {
               const provider = comp.externalService.provider;
@@ -290,7 +294,7 @@ Return ONLY valid JSON, no markdown formatting.`;
               hybridTotal += cost;
             }
           });
-          
+
           arch.hybridTotalCost = hybridTotal;
           arch.hybridBreakdown = Object.entries(breakdown).map(([provider, data]) => ({
             provider,
@@ -308,9 +312,9 @@ Return ONLY valid JSON, no markdown formatting.`;
   } catch (error) {
     // Log detailed error server-side only
     console.error("Error in generate-architecture function:", error);
-    
+
     // Return generic message to client (avoid leaking internal details)
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: "Failed to generate architecture. Please try again or contact support if the issue persists."
     }), {
       status: 500,

@@ -1,73 +1,200 @@
-# Welcome to your Lovable project
+# SolsArch - AI Solutions Architect Platform
 
-## Project info
+**AI-powered cloud architecture design platform with multi-cloud cost intelligence**
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+SolsArch is an enterprise-grade platform that helps architects, developers, and technical teams design optimal cloud architectures across AWS, Azure, GCP, and Oracle Cloud Infrastructure (OCI). Powered by advanced AI, it provides intelligent architecture recommendations, real-time cost comparisons, and production-ready infrastructure-as-code templates.
 
-## How can I edit this code?
+## 🚀 Key Features
 
-There are several ways of editing your application.
+### AI-Powered Architecture Design
+- **Interactive Chat Interface**: Conversational AI architect that understands your requirements and designs complete solutions
+- **Multi-Variant Generation**: Automatically generates cost-optimized, balanced, and performance-optimized architecture variants
+- **Hybrid Multi-Cloud Support**: Design architectures that leverage the best services from multiple cloud providers
 
-**Use Lovable**
+### Intelligent Cost Analysis
+- **Real-Time Cost Comparison**: Compare costs across AWS, Azure, GCP, and OCI for every component
+- **Cost Optimization Recommendations**: AI-driven suggestions to reduce cloud spending by 20-60%
+- **Hybrid Cost Breakdown**: Understand costs when using multiple cloud providers together
+- **SKU Browser**: Search and compare specific instance types and services across clouds
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Visual Architecture Tools
+- **Interactive Mermaid Diagrams**: Auto-generated architecture diagrams that you can customize
+- **Component Breakdown**: Detailed view of every service, SKU, and cost estimate
+- **Export Options**: Export architectures as PDF, PNG, or infrastructure-as-code (Terraform, Pulumi, CloudFormation)
 
-Changes made via Lovable will be committed automatically to this repo.
+### Enterprise Features
+- **GPU Workload Optimization**: Specialized recommendations for AI/ML workloads
+- **Compliance Support**: Architecture templates for SOC2, HIPAA, PCI-DSS, GDPR
+- **Multi-Region Design**: Global architecture patterns with latency optimization
+- **Version History**: Track and compare architecture iterations
+- **Team Collaboration**: Organization-based workspaces (coming soon)
 
-**Use your preferred IDE**
+## 🛠️ Technology Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI Framework**: shadcn/ui + Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **AI**: Google Gemini 2.5 Flash via Google AI API
+- **Visualization**: Mermaid.js for architecture diagrams
+- **State Management**: TanStack Query (React Query)
+- **Authentication**: Supabase Auth
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 📋 Prerequisites
 
-Follow these steps:
+- **Node.js** 18+ and npm (install via [nvm](https://github.com/nvm-sh/nvm))
+- **Supabase Account** (for backend and database)
+- **Google AI API Key** (for AI-powered features)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+## 🚦 Getting Started
+
+### 1. Clone the Repository
+
+```bash
 git clone <YOUR_GIT_URL>
+cd solsarch1
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 2. Install Dependencies
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 3. Environment Configuration
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 4. Supabase Setup
+
+#### Configure Supabase Secrets
+
+Add your Google AI API key to Supabase:
+
+```bash
+# Install Supabase CLI if not already installed
+npm install -g supabase
+
+# Login to Supabase
+supabase login
+
+# Link to your project
+supabase link --project-ref your-project-ref
+
+# Set the Google AI API key
+supabase secrets set GOOGLE_AI_API_KEY=your_google_ai_api_key
+```
+
+#### Deploy Supabase Functions
+
+```bash
+# Deploy the architect-chat function
+supabase functions deploy architect-chat
+
+# Deploy the generate-architecture function
+supabase functions deploy generate-architecture
+```
+
+### 5. Run Development Server
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🏗️ Building for Production
 
-**Use GitHub Codespaces**
+```bash
+# Create optimized production build
+npm run build
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Preview the production build locally
+npm run preview
+```
 
-## What technologies are used for this project?
+The build output will be in the `dist/` directory, ready for deployment to any static hosting service (Vercel, Netlify, Cloudflare Pages, etc.).
 
-This project is built with:
+## 📦 Project Structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+solsarch1/
+├── src/
+│   ├── components/          # React components
+│   │   ├── app/            # Main application components
+│   │   ├── auth/           # Authentication components
+│   │   ├── chat/           # Chat interface components
+│   │   ├── landing/        # Landing page components
+│   │   └── ui/             # shadcn/ui components
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Utility functions
+│   ├── pages/              # Route pages
+│   └── App.tsx             # Main application component
+├── supabase/
+│   ├── functions/          # Edge functions
+│   │   ├── architect-chat/ # AI chat endpoint
+│   │   └── generate-architecture/ # Architecture generation
+│   └── migrations/         # Database migrations
+├── public/                 # Static assets
+└── dist/                   # Production build output
+```
 
-## How can I deploy this project?
+## 🔑 Environment Variables
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL | Yes |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
+| `GOOGLE_AI_API_KEY` | Google AI API key (Supabase secret) | Yes |
 
-## Can I connect a custom domain to my Lovable project?
+## 🚀 Deployment
 
-Yes, you can!
+### Deploy to Vercel
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+npm install -g vercel
+vercel
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Deploy to Netlify
+
+```bash
+npm install -g netlify-cli
+netlify deploy --prod
+```
+
+### Deploy to Cloudflare Pages
+
+```bash
+npm run build
+# Upload dist/ folder to Cloudflare Pages dashboard
+```
+
+## 📖 Usage Guide
+
+1. **Sign Up/Login**: Create an account or sign in
+2. **Start a New Architecture**: Click "New Architecture" or use the chat interface
+3. **Describe Your Requirements**: Tell the AI about your application needs
+4. **Review Variants**: Compare cost-optimized, balanced, and performance-optimized options
+5. **Customize**: Adjust components, switch cloud providers, or enable hybrid mode
+6. **Export**: Download as PDF, diagram, or infrastructure-as-code
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is proprietary software. All rights reserved.
+
+## 🆘 Support
+
+For issues, questions, or feature requests, please contact the development team or create an issue in the repository.
+
+---
+
+**Built with ❤️ for cloud architects and engineering teams**
