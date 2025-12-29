@@ -306,9 +306,12 @@ Return ONLY valid JSON, no markdown formatting.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    // Log detailed error server-side only
     console.error("Error in generate-architecture function:", error);
+    
+    // Return generic message to client (avoid leaking internal details)
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Unknown error occurred" 
+      error: "Failed to generate architecture. Please try again or contact support if the issue persists."
     }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
