@@ -1,15 +1,17 @@
 import { useEffect } from "react";
-import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/hooks/useOrganization";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app/AppSidebar";
+import { OrgSwitcher } from "@/components/app/OrgSwitcher";
 import { Button } from "@/components/ui/button";
 import { Cloud, LogOut, Loader2 } from "lucide-react";
 
 export default function AppLayout() {
   const { user, loading, signOut } = useAuth();
+  const { organizations, loading: orgLoading } = useOrganization();
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -17,7 +19,14 @@ export default function AppLayout() {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  // Redirect to create org if user has no organizations
+  useEffect(() => {
+    if (!loading && !orgLoading && user && organizations.length === 0) {
+      navigate("/app/create-org");
+    }
+  }, [loading, orgLoading, user, organizations, navigate]);
+
+  if (loading || orgLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -43,6 +52,8 @@ export default function AppLayout() {
                 </div>
                 <span className="text-lg font-bold hidden sm:inline">SolsArch</span>
               </Link>
+              <div className="hidden sm:block h-4 w-px bg-border mx-2" />
+              <OrgSwitcher />
             </div>
             
             <Button variant="ghost" size="sm" onClick={signOut} className="gap-2">

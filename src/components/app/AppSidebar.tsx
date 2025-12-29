@@ -53,6 +53,8 @@ const resourceItems = [
   { title: "Contact", url: "/contact", icon: Mail },
 ];
 
+import { Settings } from "lucide-react";
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -226,6 +228,14 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-border p-2">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Settings">
+              <NavLink to="/app/settings" className="flex items-center gap-2" activeClassName="bg-primary/10 text-primary">
+                <Settings className="h-4 w-4 flex-shrink-0" />
+                {!collapsed && <span>Settings</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Profile">
               <NavLink to="/app/profile" className="flex items-center gap-2" activeClassName="bg-primary/10 text-primary">
