@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,12 +11,65 @@ interface ChatMessage {
   content: string;
 }
 
+// Simple in-memory rate limiting (use Redis/Upstash in production for distributed systems)
+const requestCounts = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(userId: string, limit = 30): boolean {
+  const now = Date.now();
+  const userLimit = requestCounts.get(userId);
+  
+  if (!userLimit || now > userLimit.resetAt) {
+    requestCounts.set(userId, { count: 1, resetAt: now + 60000 }); // 1 min window
+    return true;
+  }
+  
+  if (userLimit.count >= limit) return false;
+  
+  userLimit.count++;
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Validate Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+      );
+    }
+
+    // Verify JWT token with Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+      );
+    }
+
+    // Rate limiting
+    if (!checkRateLimit(user.id)) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment before trying again.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+      );
+    }
+
+    console.log(`Authenticated request from user: ${user.id}`);
+
     const { messages, mode, stream = true } = await req.json() as { 
       messages: ChatMessage[]; 
       mode: 'chat' | 'generate' | 'analyze';

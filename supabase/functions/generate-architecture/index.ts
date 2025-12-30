@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -45,12 +46,65 @@ interface RequirementsInput {
   existingServices?: ExistingService[];
 }
 
+// Simple in-memory rate limiting
+const requestCounts = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(userId: string, limit = 10): boolean {
+  const now = Date.now();
+  const userLimit = requestCounts.get(userId);
+  
+  if (!userLimit || now > userLimit.resetAt) {
+    requestCounts.set(userId, { count: 1, resetAt: now + 60000 }); // 1 min window
+    return true;
+  }
+  
+  if (userLimit.count >= limit) return false;
+  
+  userLimit.count++;
+  return true;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Validate Authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+      );
+    }
+
+    // Verify JWT token with Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+      );
+    }
+
+    // Rate limiting (more restrictive for generation)
+    if (!checkRateLimit(user.id)) {
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment before generating again.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' }}
+      );
+    }
+
+    console.log(`Authenticated architecture generation from user: ${user.id}`);
+
     const { requirements } = await req.json() as { requirements: RequirementsInput };
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
