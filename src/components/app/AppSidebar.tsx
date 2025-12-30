@@ -21,7 +21,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   LayoutDashboard, 
   MessageSquare, 
-  ListChecks, 
   History, 
   User, 
   HelpCircle, 
@@ -43,9 +42,7 @@ interface Conversation {
 const mainNavItems = [
   { title: "Dashboard", url: "/app", icon: LayoutDashboard },
   { title: "New Chat", url: "/app/chat", icon: MessageSquare },
-  { title: "Wizard", url: "/app/wizard", icon: ListChecks },
 ];
-
 const resourceItems = [
   { title: "Guide", url: "/guide", icon: BookOpen },
   { title: "FAQ", url: "/faq", icon: HelpCircle },

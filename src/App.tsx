@@ -19,9 +19,7 @@ import NotFound from "./pages/NotFound";
 
 // App layout and pages
 import AppLayout from "./layouts/AppLayout";
-import AppDashboard from "./pages/app/AppDashboard";
 import AppChat from "./pages/app/AppChat";
-import AppWizard from "./pages/app/AppWizard";
 import AppProfile from "./pages/app/AppProfile";
 import AppGPU from "./pages/app/AppGPU";
 import AppSettings from "./pages/app/AppSettings";
@@ -54,10 +52,9 @@ const App = () => (
                   <AppLayout />
                 </ProtectedRoute>
               }>
-                <Route index element={<AppDashboard />} />
+                <Route index element={<AppChat />} />
                 <Route path="chat" element={<AppChat />} />
                 <Route path="chat/:conversationId" element={<AppChat />} />
-                <Route path="wizard" element={<AppWizard />} />
                 <Route path="gpu" element={<AppGPU />} />
                 <Route path="history" element={<ChatHistory />} />
                 <Route path="profile" element={<AppProfile />} />
