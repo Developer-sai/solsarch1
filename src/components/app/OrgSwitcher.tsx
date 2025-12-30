@@ -77,18 +77,38 @@ export function OrgSwitcher() {
     );
   }
 
-  if (!currentOrganization && organizations.length === 0) {
+  // Show Personal mode or organization dropdown
+  if (organizations.length === 0) {
     return (
       <>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowCreateDialog(true)}
-          className="gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Create Organization</span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-2 max-w-[200px]">
+              <Building2 className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate hidden sm:inline">Personal</span>
+              <ChevronDown className="h-3 w-3 flex-shrink-0 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuLabel>Workspace</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem disabled className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                <span>Personal</span>
+              </div>
+              <Check className="h-4 w-4 text-primary" />
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Organization
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <CreateOrgDialog
           open={showCreateDialog}

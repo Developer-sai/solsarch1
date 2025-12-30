@@ -19,12 +19,7 @@ export default function AppLayout() {
     }
   }, [user, loading, navigate]);
 
-  // Redirect to create org if user has no organizations
-  useEffect(() => {
-    if (!loading && !orgLoading && user && organizations.length === 0) {
-      navigate("/app/create-org");
-    }
-  }, [loading, orgLoading, user, organizations, navigate]);
+  // Organization creation is now optional - users can use personal mode
 
   if (loading || orgLoading) {
     return (
