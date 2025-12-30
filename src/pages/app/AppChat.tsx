@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Bot, Sparkles, ArrowDown, Save, Loader2, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Bot, Sparkles, ArrowDown, Save, Loader2, PanelRightOpen, PanelRightClose, Plus, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble';
 import { ChatInputArea } from '@/components/chat/ChatInputArea';
 import { ArtifactPanel } from '@/components/chat/ArtifactPanel';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Message {
   id: string;
@@ -34,18 +35,13 @@ I'm your AI Solutions Architect. I can help you design **any type of software sy
 
 ## What I can help with:
 
-### 🌐 Applications
-- Web Apps, Mobile Apps, APIs, PWAs
+**Applications** — Web Apps, Mobile Apps, APIs, PWAs
 
-### ☁️ Infrastructure  
-- Cloud Architecture (AWS, Azure, GCP, OCI)
-- Microservices, Serverless, Containers
+**Infrastructure** — Cloud Architecture (AWS, Azure, GCP, OCI), Microservices, Serverless
 
-### 🗄️ Data & AI
-- Database Design, AI/ML Systems, Data Pipelines
+**Data & AI** — Database Design, AI/ML Systems, Data Pipelines
 
-### 🔒 Security & DevOps
-- Authentication, CI/CD, IaC
+**Security & DevOps** — Authentication, CI/CD, Infrastructure as Code
 
 ---
 
@@ -437,258 +433,184 @@ export default function AppChat() {
     }
   };
 
-  const handleGenerate = async () => {
-    setIsLoading(true);
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Authentication Required",
-          description: "Please sign in to generate architectures.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/architect-chat`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            messages: messages.filter(m => m.id !== 'welcome').map(m => ({
-              role: m.role,
-              content: m.content
-            })),
-            mode: 'generate'
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate architecture');
-      }
-
-      const data = await response.json();
-      
-      if (data.type === 'architecture' && data.data) {
-        const artifact: ArtifactData = {
-          type: 'architecture',
-          title: 'Architecture Plan',
-          content: JSON.stringify(data.data, null, 2),
-          sections: [
-            { title: 'Overview', content: data.data.architectures?.[0]?.description || '' },
-            { title: 'Components', content: formatComponents(data.data.architectures?.[0]?.components) },
-            { title: 'Recommendations', content: formatRecommendations(data.data.recommendations) },
-          ]
-        };
-        
-        setCurrentArtifact(artifact);
-        setShowArtifactPanel(true);
-        
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: "I've generated your architecture plan. You can view it in the panel on the right.",
-          timestamp: new Date(),
-          artifact
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-        
-        toast({
-          title: "Architecture Generated!",
-          description: "Your cloud architecture is ready to view.",
-        });
-      } else {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: data.content || "I couldn't generate a complete architecture. Please provide more details.",
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-      }
-    } catch (error) {
-      console.error('Generation error:', error);
-      toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleNewChat = () => {
+    setConversationId(null);
+    setMessages([{
+      id: 'welcome',
+      role: 'assistant',
+      content: WELCOME_MESSAGE,
+      timestamp: new Date()
+    }]);
+    setCurrentArtifact(null);
+    setShowArtifactPanel(false);
+    navigate('/app/chat');
   };
 
-  const hasEnoughContext = messages.filter(m => m.id !== 'welcome').length >= 2;
-  const canSave = user && messages.filter(m => m.id !== 'welcome').length >= 2;
+  const handleViewArtifact = (artifact: ArtifactData) => {
+    setCurrentArtifact(artifact);
+    setShowArtifactPanel(true);
+  };
+
+  const parseArtifact = (content: string): ArtifactData | null => {
+    // Check for architecture/plan markers
+    const diagramMatch = content.match(/```mermaid\n([\s\S]*?)```/);
+    const planMatch = content.match(/## Architecture Plan/i) || content.match(/# Architecture/i);
+    
+    if (diagramMatch || planMatch) {
+      return {
+        type: diagramMatch ? 'diagram' : 'plan',
+        title: diagramMatch ? 'Architecture Diagram' : 'Architecture Plan',
+        content: content,
+        sections: []
+      };
+    }
+    
+    return null;
+  };
+
+  const hasMessages = messages.length > 1 || (messages.length === 1 && messages[0].id !== 'welcome');
 
   return (
-    <div className="flex h-full">
+    <div className="h-full flex">
       {/* Main Chat Area */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 transition-all duration-300",
         showArtifactPanel && "lg:mr-[400px]"
       )}>
-        {/* Chat Header */}
-        <div className="flex-shrink-0 px-4 py-3 border-b border-border bg-card/50 backdrop-blur-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/30 to-info/30 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-sm">SolsArch AI</h2>
-                <p className="text-xs text-muted-foreground">Solutions Architect</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {canSave && (
+        {/* Chat Header - Claude/ChatGPT style */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-background/50 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-1.5 h-8 text-xs"
-                  onClick={() => saveConversation()}
-                  disabled={isSaving}
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleNewChat}
+                  className="h-8 w-8"
                 >
-                  {isSaving ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Save className="w-3 h-3" />
-                  )}
-                  {conversationId ? 'Update' : 'Save'}
+                  <Plus className="h-4 w-4" />
                 </Button>
-              )}
-              {hasEnoughContext && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-1.5 h-8 text-xs border-primary/50 text-primary hover:bg-primary/10"
-                  onClick={handleGenerate}
-                  disabled={isLoading}
-                >
-                  <Sparkles className="w-3 h-3" />
-                  Generate
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => setShowArtifactPanel(!showArtifactPanel)}
-              >
-                {showArtifactPanel ? (
-                  <PanelRightClose className="w-4 h-4" />
-                ) : (
-                  <PanelRightOpen className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
+              </TooltipTrigger>
+              <TooltipContent>New Chat</TooltipContent>
+            </Tooltip>
+            <span className="text-sm font-medium text-muted-foreground">
+              {conversationId ? 'Conversation' : 'New Chat'}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {hasMessages && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => saveConversation()}
+                    disabled={isSaving}
+                    className="gap-2"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">Save</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Save conversation</TooltipContent>
+              </Tooltip>
+            )}
+            
+            {currentArtifact && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setShowArtifactPanel(!showArtifactPanel)}
+                    className="h-8 w-8"
+                  >
+                    {showArtifactPanel ? (
+                      <PanelRightClose className="h-4 w-4" />
+                    ) : (
+                      <PanelRightOpen className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {showArtifactPanel ? 'Close panel' : 'Open panel'}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
 
-        {/* Messages */}
+        {/* Messages Area */}
         <div 
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto"
         >
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
             {messages.map((message) => (
-              <ChatMessageBubble 
-                key={message.id} 
+              <ChatMessageBubble
+                key={message.id}
                 message={message}
-                onViewArtifact={message.artifact ? () => {
-                  setCurrentArtifact(message.artifact!);
-                  setShowArtifactPanel(true);
-                } : undefined}
+                onViewArtifact={message.artifact ? () => handleViewArtifact(message.artifact!) : undefined}
               />
             ))}
-            {isLoading && (
-              <div className="flex gap-4 p-6">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/30 to-info/30 flex items-center justify-center flex-shrink-0">
+            
+            {isLoading && messages[messages.length - 1]?.content === '' && (
+              <div className="flex items-center gap-3 px-4">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Bot className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">Thinking...</span>
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
                 </div>
               </div>
             )}
+            
             <div ref={messagesEndRef} />
           </div>
         </div>
 
-        {/* Scroll button */}
+        {/* Scroll to bottom button */}
         {showScrollButton && (
           <Button
-            variant="outline"
+            variant="secondary"
             size="icon"
-            className="absolute bottom-24 right-6 rounded-full shadow-lg"
+            className="absolute bottom-24 right-8 rounded-full shadow-lg z-10"
             onClick={scrollToBottom}
           >
-            <ArrowDown className="w-4 h-4" />
+            <ArrowDown className="h-4 w-4" />
           </Button>
         )}
 
-        {/* Input */}
-        <ChatInputArea 
-          onSend={sendMessage}
-          isLoading={isLoading}
-        />
+        {/* Input Area - ChatGPT style at bottom */}
+        <div className="border-t border-border/50 bg-background/80 backdrop-blur-sm">
+          <div className="max-w-3xl mx-auto">
+            <ChatInputArea
+              onSend={sendMessage}
+              isLoading={isLoading}
+              placeholder="Ask me about your architecture..."
+            />
+          </div>
+        </div>
       </div>
 
       {/* Artifact Panel */}
-      {showArtifactPanel && (
-        <ArtifactPanel 
-          artifact={currentArtifact}
-          onClose={() => setShowArtifactPanel(false)}
-        />
+      {showArtifactPanel && currentArtifact && (
+        <div className="hidden lg:block fixed right-0 top-14 bottom-0 w-[400px] border-l border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+          <ArtifactPanel 
+            artifact={currentArtifact}
+            onClose={() => setShowArtifactPanel(false)}
+          />
+        </div>
       )}
     </div>
   );
-}
-
-function parseArtifact(content: string): ArtifactData | null {
-  // Check for mermaid diagrams
-  const mermaidMatch = content.match(/```mermaid\n([\s\S]*?)```/);
-  if (mermaidMatch) {
-    return {
-      type: 'diagram',
-      title: 'Architecture Diagram',
-      content: mermaidMatch[1].trim()
-    };
-  }
-  
-  // Check for structured plan sections
-  const hasPlanSections = content.includes('## Overview') || 
-                          content.includes('## Architecture') ||
-                          content.includes('## Components') ||
-                          content.includes('## Implementation');
-  
-  if (hasPlanSections) {
-    return {
-      type: 'plan',
-      title: 'Architecture Plan',
-      content: content
-    };
-  }
-  
-  return null;
-}
-
-function formatComponents(components: any[]): string {
-  if (!components) return 'No components defined';
-  return components.map(c => `- **${c.name}** (${c.serviceType})`).join('\n');
-}
-
-function formatRecommendations(recommendations: any[]): string {
-  if (!recommendations) return 'No recommendations';
-  return recommendations.map(r => `- **${r.title}**: ${r.description}`).join('\n');
 }
