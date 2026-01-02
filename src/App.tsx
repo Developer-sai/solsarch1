@@ -21,7 +21,6 @@ import NotFound from "./pages/NotFound";
 import AppLayout from "./layouts/AppLayout";
 import AppDashboard from "./pages/app/AppDashboard";
 import AppChat from "./pages/app/AppChat";
-import AppWizard from "./pages/app/AppWizard";
 import AppProfile from "./pages/app/AppProfile";
 import AppGPU from "./pages/app/AppGPU";
 import AppSettings from "./pages/app/AppSettings";
@@ -47,7 +46,7 @@ const App = () => (
               <Route path="/contact" element={<Contact />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/guide" element={<Guide />} />
-              
+
               {/* App routes (authenticated) */}
               <Route path="/app" element={
                 <ProtectedRoute>
@@ -57,7 +56,6 @@ const App = () => (
                 <Route index element={<AppDashboard />} />
                 <Route path="chat" element={<AppChat />} />
                 <Route path="chat/:conversationId" element={<AppChat />} />
-                <Route path="wizard" element={<AppWizard />} />
                 <Route path="gpu" element={<AppGPU />} />
                 <Route path="history" element={<ChatHistory />} />
                 <Route path="profile" element={<AppProfile />} />
@@ -65,7 +63,7 @@ const App = () => (
                 <Route path="settings/team" element={<AppSettings />} />
                 <Route path="create-org" element={<CreateOrganization />} />
               </Route>
-              
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

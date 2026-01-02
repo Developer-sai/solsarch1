@@ -18,14 +18,14 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  LayoutDashboard, 
-  MessageSquare, 
-  ListChecks, 
-  History, 
-  User, 
-  HelpCircle, 
-  BookOpen, 
+import {
+  LayoutDashboard,
+  MessageSquare,
+  ListChecks,
+  History,
+  User,
+  HelpCircle,
+  BookOpen,
   Mail,
   Info,
   Plus,
@@ -43,7 +43,6 @@ interface Conversation {
 const mainNavItems = [
   { title: "Dashboard", url: "/app", icon: LayoutDashboard },
   { title: "New Chat", url: "/app/chat", icon: MessageSquare },
-  { title: "Wizard", url: "/app/wizard", icon: ListChecks },
 ];
 
 const resourceItems = [
@@ -92,7 +91,7 @@ export function AppSidebar() {
     e.preventDefault();
     e.stopPropagation();
     setDeletingId(id);
-    
+
     try {
       const { error } = await supabase
         .from("conversations")
@@ -100,10 +99,10 @@ export function AppSidebar() {
         .eq("id", id);
 
       if (error) throw error;
-      
+
       setConversations(prev => prev.filter(c => c.id !== id));
       toast.success("Conversation deleted");
-      
+
       // If we're viewing this conversation, go to new chat
       if (location.pathname === `/app/chat/${id}`) {
         navigate("/app/chat");
@@ -128,7 +127,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
+                  <SidebarMenuButton
                     asChild
                     isActive={isActive(item.url)}
                     tooltip={item.title}
@@ -149,9 +148,9 @@ export function AppSidebar() {
           <SidebarGroup className="flex-1">
             <SidebarGroupLabel className="flex items-center justify-between">
               <span>Recent Chats</span>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-5 w-5"
                 onClick={() => navigate("/app/chat")}
               >
@@ -170,7 +169,7 @@ export function AppSidebar() {
                   <SidebarMenu>
                     {conversations.map((conv) => (
                       <SidebarMenuItem key={conv.id}>
-                        <SidebarMenuButton 
+                        <SidebarMenuButton
                           asChild
                           isActive={location.pathname === `/app/chat/${conv.id}`}
                           className="group pr-1"

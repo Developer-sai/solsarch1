@@ -12,8 +12,8 @@ const steps = [
   },
   {
     step: 2,
-    title: "Choose Your Mode",
-    description: "Use the AI Chat for conversational architecture design, or the Guided Wizard for a structured step-by-step approach.",
+    title: "Start a Conversation",
+    description: "Use the AI Chat to describe your project in natural language. The AI will ask clarifying questions to understand your needs.",
     icon: <MessageSquare className="w-6 h-6" />
   },
   {
@@ -68,7 +68,7 @@ export default function Guide() {
       {/* Background */}
       <div className="fixed inset-0 bg-grid-pattern bg-grid opacity-5 pointer-events-none" />
       <div className="fixed top-1/3 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[128px] pointer-events-none" />
-      
+
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -171,19 +171,19 @@ export default function Guide() {
         <section className="mb-20">
           <h2 className="text-2xl font-bold mb-8 text-center">Example Prompts</h2>
           <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
-            <ExamplePrompt 
+            <ExamplePrompt
               category="Web App"
               prompt="I need to build a SaaS platform for project management with real-time collaboration. Expecting 10,000 users, budget around $5,000/month."
             />
-            <ExamplePrompt 
+            <ExamplePrompt
               category="Mobile App"
               prompt="Design the backend for a food delivery app with real-time order tracking, supporting 100,000 daily orders."
             />
-            <ExamplePrompt 
+            <ExamplePrompt
               category="AI/ML"
               prompt="I want to deploy a RAG-based chatbot using our company documents. Need low latency and high availability."
             />
-            <ExamplePrompt 
+            <ExamplePrompt
               category="Migration"
               prompt="Help me migrate our monolithic Node.js app to microservices on Kubernetes with minimal downtime."
             />

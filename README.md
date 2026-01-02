@@ -1,5 +1,8 @@
 # SolsArch - AI Solutions Architect Platform
 
+![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)
+![Status](https://img.shields.io/badge/status-production-green.svg)
+
 **AI-powered cloud architecture design platform with multi-cloud cost intelligence**
 
 SolsArch is an enterprise-grade platform that helps architects, developers, and technical teams design optimal cloud architectures across AWS, Azure, GCP, and Oracle Cloud Infrastructure (OCI). Powered by advanced AI, it provides intelligent architecture recommendations, real-time cost comparisons, and production-ready infrastructure-as-code templates.
@@ -34,7 +37,7 @@ SolsArch is an enterprise-grade platform that helps architects, developers, and 
 - **Frontend**: React 18 + TypeScript + Vite
 - **UI Framework**: shadcn/ui + Tailwind CSS
 - **Backend**: Supabase (PostgreSQL + Edge Functions)
-- **AI**: Google Gemini 2.5 Flash via Google AI API
+- **AI**: Google Gemini 2.0 Flash Exp via Google AI API
 - **Visualization**: Mermaid.js for architecture diagrams
 - **State Management**: TanStack Query (React Query)
 - **Authentication**: Supabase Auth
@@ -177,10 +180,10 @@ npm run build
 ## 📖 Usage Guide
 
 1. **Sign Up/Login**: Create an account or sign in
-2. **Start a New Architecture**: Click "New Architecture" or use the chat interface
-3. **Describe Your Requirements**: Tell the AI about your application needs
-4. **Review Variants**: Compare cost-optimized, balanced, and performance-optimized options
-5. **Customize**: Adjust components, switch cloud providers, or enable hybrid mode
+2. **Start a Chat**: Click "New Chat" to begin a conversation with the AI architect
+3. **Describe Your Requirements**: Tell the AI about your application needs in natural language
+4. **Review Architecture**: The AI will generate architecture recommendations with diagrams and cost estimates
+5. **Iterate**: Ask follow-up questions to refine the architecture
 6. **Export**: Download as PDF, diagram, or infrastructure-as-code
 
 ## 🤝 Contributing

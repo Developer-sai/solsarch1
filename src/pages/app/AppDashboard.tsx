@@ -1,16 +1,16 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  MessageSquare, 
-  ListChecks, 
-  Globe, 
-  Smartphone, 
-  Server, 
-  Database, 
-  Layers, 
-  Sparkles, 
-  Layout, 
+import {
+  MessageSquare,
+  ListChecks,
+  Globe,
+  Smartphone,
+  Server,
+  Database,
+  Layers,
+  Sparkles,
+  Layout,
   Palette,
   Cpu,
   FileCode2,
@@ -37,7 +37,7 @@ export default function AppDashboard() {
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome to SolsArch</h1>
           <p className="text-muted-foreground mb-6">AI-powered Solutions Architect for any application</p>
-          
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {STATS.map((stat) => (
               <div key={stat.label} className="flex items-center gap-3 p-4 rounded-xl bg-card/50 border border-border/50">
@@ -74,23 +74,23 @@ export default function AppDashboard() {
               </CardContent>
             </Link>
           </Card>
-          
+
           <Card className="group hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all bg-card/80">
-            <Link to="/app/wizard">
+            <Link to="/app/history">
               <CardHeader className="pb-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-info/20 to-accent/20 flex items-center justify-center text-info mb-4 group-hover:from-info/30 group-hover:to-accent/30 transition-colors">
-                  <ListChecks className="w-7 h-7" />
+                  <History className="w-7 h-7" />
                 </div>
-                <CardTitle className="text-xl">Guided Wizard</CardTitle>
+                <CardTitle className="text-xl">Continue Conversations</CardTitle>
                 <CardDescription className="text-base">
-                  Step-by-step questionnaire to gather requirements. Perfect for structured planning.
+                  Resume previous architecture discussions and iterate on existing designs.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">Step by Step</Badge>
-                  <Badge variant="secondary">Cost Compare</Badge>
-                  <Badge variant="secondary">IaC Export</Badge>
+                  <Badge variant="secondary">Version History</Badge>
+                  <Badge variant="secondary">Saved Chats</Badge>
+                  <Badge variant="secondary">Iterate Designs</Badge>
                 </div>
               </CardContent>
             </Link>
@@ -110,7 +110,7 @@ export default function AppDashboard() {
               </CardContent>
             </Card>
           </Link>
-          
+
           <Link to="/app/history">
             <Card className="h-full group hover:border-primary/50 transition-all bg-card/50">
               <CardContent className="pt-6">
@@ -122,7 +122,7 @@ export default function AppDashboard() {
               </CardContent>
             </Card>
           </Link>
-          
+
           <Link to="/app/profile">
             <Card className="h-full group hover:border-primary/50 transition-all bg-card/50">
               <CardContent className="pt-6">
@@ -134,7 +134,7 @@ export default function AppDashboard() {
               </CardContent>
             </Card>
           </Link>
-          
+
           <Card className="h-full bg-card/50 border-dashed">
             <CardContent className="pt-6">
               <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center text-success mb-3">
@@ -164,22 +164,22 @@ export default function AppDashboard() {
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-6">Platform Features</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <FeatureCard 
+            <FeatureCard
               icon={<Layout className="w-5 h-5" />}
               title="Architecture Diagrams"
               description="Auto-generated Mermaid diagrams for any system"
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<Globe className="w-5 h-5" />}
               title="Multi-Cloud Compare"
               description="AWS, Azure, GCP, OCI side-by-side pricing"
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<FileCode2 className="w-5 h-5" />}
               title="IaC Export"
               description="Terraform, CloudFormation, ARM, K8s, Docker"
             />
-            <FeatureCard 
+            <FeatureCard
               icon={<Shield className="w-5 h-5" />}
               title="Compliance Ready"
               description="SOC2, HIPAA, PCI-DSS, GDPR patterns"

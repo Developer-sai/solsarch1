@@ -3,22 +3,22 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Cloud, 
-  Zap, 
-  ArrowRight, 
-  Globe, 
-  Smartphone, 
-  Database, 
-  Layers, 
-  Sparkles, 
-  Layout, 
-  BarChart3, 
-  Shield, 
-  LogIn, 
-  MessageSquare, 
-  ListChecks, 
-  Menu, 
+import {
+  Cloud,
+  Zap,
+  ArrowRight,
+  Globe,
+  Smartphone,
+  Database,
+  Layers,
+  Sparkles,
+  Layout,
+  BarChart3,
+  Shield,
+  LogIn,
+  MessageSquare,
+  ListChecks,
+  Menu,
   X,
   CheckCircle2,
   Building2,
@@ -265,7 +265,7 @@ export default function Landing() {
         <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[150px] animate-pulse" />
         <div className="absolute top-40 right-1/4 w-[400px] h-[400px] bg-info/15 rounded-full blur-[120px]" />
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-accent/10 rounded-full blur-[150px]" />
-        
+
         <div className="container relative mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-12">
           <div className="flex flex-col items-center text-center max-w-5xl mx-auto">
             {/* Trust Badge */}
@@ -277,13 +277,13 @@ export default function Landing() {
               <span className="text-xs text-muted-foreground/60">|</span>
               <span className="text-sm text-primary font-semibold">4.9/5 Rating</span>
             </div>
-            
+
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
               AI-Powered{" "}
               <span className="gradient-text">Solutions Architect</span>
             </h1>
-            
+
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mb-8 px-2 animate-fade-in-up leading-relaxed" style={{ animationDelay: "0.2s" }}>
               Design production-ready cloud architectures in seconds. Compare costs across AWS, Azure, GCP, and OCI. Export Terraform, diagrams, and docs — all powered by AI.
             </p>
@@ -291,17 +291,11 @@ export default function Landing() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-12 w-full sm:w-auto animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
               {user ? (
-                <>
-                  <Button onClick={() => navigate('/app/chat')} variant="hero" size="lg" className="gap-2 w-full sm:w-auto shadow-xl shadow-primary/25 text-base px-8">
-                    <MessageSquare className="w-5 h-5" />
-                    Chat with AI Architect
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
-                  <Button onClick={() => navigate('/app/wizard')} variant="outline" size="lg" className="gap-2 border-border/50 w-full sm:w-auto text-base">
-                    <ListChecks className="w-5 h-5" />
-                    Use Wizard
-                  </Button>
-                </>
+                <Button onClick={() => navigate('/app/chat')} variant="hero" size="lg" className="gap-2 w-full sm:w-auto shadow-xl shadow-primary/25 text-base px-8">
+                  <MessageSquare className="w-5 h-5" />
+                  Chat with AI Architect
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
               ) : (
                 <>
                   <Button onClick={() => navigate('/sign-up')} variant="hero" size="lg" className="gap-2 w-full sm:w-auto shadow-xl shadow-primary/25 text-base px-8">
@@ -345,7 +339,7 @@ export default function Landing() {
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
               {PROBLEMS.map((problem) => (
-                <div 
+                <div
                   key={problem.text}
                   className="flex items-center gap-3 p-4 rounded-xl bg-card/50 border border-destructive/20"
                 >
@@ -373,7 +367,7 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {TARGET_CUSTOMERS.map((customer, index) => (
-              <div 
+              <div
                 key={customer.title}
                 className={`p-6 rounded-xl bg-gradient-to-br ${customer.color} border border-border/50 hover:border-primary/30 transition-all group animate-fade-in-up`}
                 style={{ animationDelay: `${0.1 * index}s` }}
@@ -384,9 +378,9 @@ export default function Landing() {
                   </div>
                   <h3 className="text-lg font-bold">{customer.title}</h3>
                 </div>
-                
+
                 <p className="text-sm text-muted-foreground mb-4">{customer.problem}</p>
-                
+
                 <div className="space-y-2 mb-4">
                   {customer.benefits.map((benefit) => (
                     <div key={benefit} className="flex items-center gap-2 text-sm">
@@ -426,8 +420,8 @@ export default function Landing() {
                   <div className="text-center text-primary">With SolsArch</div>
                 </div>
                 {COMPARISON_DATA.map((row, index) => (
-                  <div 
-                    key={row.painPoint} 
+                  <div
+                    key={row.painPoint}
                     className={`grid grid-cols-3 p-4 ${index % 2 === 0 ? 'bg-card/30' : 'bg-card/50'}`}
                   >
                     <div className="font-medium">{row.painPoint}</div>
@@ -452,7 +446,7 @@ export default function Landing() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {USE_CASES.map((useCase, index) => (
-              <div 
+              <div
                 key={useCase.industry}
                 className="p-6 rounded-xl bg-card/50 border border-border/50 hover:border-primary/30 transition-all animate-fade-in-up"
                 style={{ animationDelay: `${0.1 * index}s` }}
@@ -463,9 +457,9 @@ export default function Landing() {
                   </div>
                   <h3 className="font-bold">{useCase.industry}</h3>
                 </div>
-                
+
                 <p className="text-sm italic text-muted-foreground mb-4">{useCase.quote}</p>
-                
+
                 <div className="p-3 rounded-lg bg-success/10 border border-success/20">
                   <div className="flex items-start gap-2">
                     <Sparkles className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
@@ -490,7 +484,7 @@ export default function Landing() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
               {COMPETITORS.map((comp) => (
-                <div 
+                <div
                   key={comp.name}
                   className="p-5 rounded-xl bg-card/50 border border-border/50"
                 >
