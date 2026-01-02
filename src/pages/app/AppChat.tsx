@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Bot, Sparkles, ArrowDown, Save, Loader2, PanelRightOpen, PanelRightClose, Plus, Settings2 } from 'lucide-react';
+import { Bot, ArrowDown, Save, Loader2, PanelRightOpen, PanelRightClose, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble';
+import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInputArea } from '@/components/chat/ChatInputArea';
 import { ArtifactPanel } from '@/components/chat/ArtifactPanel';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -16,36 +16,27 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  artifact?: ArtifactData | null;
 }
 
 export interface ArtifactData {
-  type: 'architecture' | 'plan' | 'diagram';
+  type: 'architecture' | 'diagram' | 'plan' | 'code';
   title: string;
   content: string;
-  sections?: {
-    title: string;
-    content: string;
-  }[];
 }
 
-const WELCOME_MESSAGE = `# Welcome to SolsArch
+const WELCOME_MESSAGE = `Hey! I'm **SolsArch**, your AI Solutions Architect.
 
-I'm your AI Solutions Architect. I can help you design **any type of software system** from concept to production-ready architecture.
+I can help you design and architect any software system — from a simple web app to complex distributed systems across multiple clouds.
 
-## What I can help with:
+**Some things I can help with:**
 
-**Applications** — Web Apps, Mobile Apps, APIs, PWAs
+- 🏗️ **System Architecture** — Design scalable, production-ready systems
+- ☁️ **Cloud Strategy** — Compare AWS, Azure, GCP, and OCI options with cost estimates
+- 🔐 **Security & Auth** — Implement OAuth, RBAC, and compliance requirements
+- 📊 **Data Architecture** — Choose the right databases and data flow patterns
+- 🤖 **AI/ML Systems** — Design LLM integrations, RAG pipelines, and ML infrastructure
 
-**Infrastructure** — Cloud Architecture (AWS, Azure, GCP, OCI), Microservices, Serverless
-
-**Data & AI** — Database Design, AI/ML Systems, Data Pipelines
-
-**Security & DevOps** — Authentication, CI/CD, Infrastructure as Code
-
----
-
-**Tell me about your project** — be as detailed or vague as you like. I'll ask clarifying questions and generate a comprehensive architecture plan.`;
+**Just describe what you want to build** — be as detailed or as vague as you like. I'll ask clarifying questions and generate architecture diagrams, implementation plans, and tech stack recommendations.`;
 
 export default function AppChat() {
   const { conversationId: urlConversationId } = useParams();
@@ -80,7 +71,6 @@ export default function AppChat() {
     if (urlConversationId && user) {
       loadConversation(urlConversationId);
     } else if (!urlConversationId) {
-      // Reset to new conversation
       setConversationId(null);
       setMessages([{
         id: 'welcome',
@@ -89,6 +79,7 @@ export default function AppChat() {
         timestamp: new Date()
       }]);
       setCurrentArtifact(null);
+      setShowArtifactPanel(false);
     }
   }, [urlConversationId, user]);
 
@@ -162,10 +153,8 @@ export default function AppChat() {
     setIsSaving(true);
     try {
       const firstUserMessage = messagesToSave.find(m => m.role === 'user');
-      // Generate a better title from user's first message
       let title = customTitle;
       if (!title && firstUserMessage) {
-        // Extract first meaningful sentence/phrase
         const content = firstUserMessage.content.trim();
         const firstLine = content.split('\n')[0];
         title = firstLine.slice(0, 80) + (firstLine.length > 80 ? '...' : '');
@@ -262,6 +251,39 @@ export default function AppChat() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const extractArtifact = (content: string): ArtifactData | null => {
+    // Check for mermaid diagrams
+    const mermaidMatch = content.match(/```mermaid\n([\s\S]*?)```/);
+    if (mermaidMatch) {
+      return {
+        type: 'diagram',
+        title: 'Architecture Diagram',
+        content: mermaidMatch[1].trim()
+      };
+    }
+
+    // Check for implementation plans
+    if (content.includes('## Implementation Plan') || content.includes('### Phase 1')) {
+      return {
+        type: 'plan',
+        title: 'Implementation Plan',
+        content: content
+      };
+    }
+
+    // Check for code blocks with substantial content
+    const codeMatch = content.match(/```(\w+)\n([\s\S]{200,}?)```/);
+    if (codeMatch) {
+      return {
+        type: 'code',
+        title: `Code: ${codeMatch[1]}`,
+        content: codeMatch[2].trim()
+      };
+    }
+
+    return null;
+  };
+
   const sendMessage = async (content: string, files?: File[]) => {
     let fullContent = content;
     
@@ -286,7 +308,6 @@ export default function AppChat() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Create placeholder assistant message for streaming
     const assistantMessageId = (Date.now() + 1).toString();
     setMessages(prev => [...prev, {
       id: assistantMessageId,
@@ -305,7 +326,6 @@ export default function AppChat() {
           variant: "destructive"
         });
         setIsLoading(false);
-        // Remove the empty assistant message
         setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
         return;
       }
@@ -338,10 +358,9 @@ export default function AppChat() {
         throw new Error('No response body');
       }
 
-      // Stream the response
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let fullContent2 = '';
+      let fullResponse = '';
       let textBuffer = '';
 
       while (true) {
@@ -350,7 +369,6 @@ export default function AppChat() {
         
         textBuffer += decoder.decode(value, { stream: true });
 
-        // Process line-by-line for SSE
         let newlineIndex: number;
         while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
           let line = textBuffer.slice(0, newlineIndex);
@@ -367,23 +385,21 @@ export default function AppChat() {
             const parsed = JSON.parse(jsonStr);
             const deltaContent = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (deltaContent) {
-              fullContent2 += deltaContent;
-              // Update the assistant message with new content
+              fullResponse += deltaContent;
               setMessages(prev => prev.map(m => 
                 m.id === assistantMessageId 
-                  ? { ...m, content: fullContent2 }
+                  ? { ...m, content: fullResponse }
                   : m
               ));
             }
           } catch {
-            // Incomplete JSON, put it back and wait for more
             textBuffer = line + '\n' + textBuffer;
             break;
           }
         }
       }
 
-      // Final flush of remaining buffer
+      // Final flush
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split('\n')) {
           if (!raw) continue;
@@ -396,10 +412,10 @@ export default function AppChat() {
             const parsed = JSON.parse(jsonStr);
             const deltaContent = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (deltaContent) {
-              fullContent2 += deltaContent;
+              fullResponse += deltaContent;
               setMessages(prev => prev.map(m => 
                 m.id === assistantMessageId 
-                  ? { ...m, content: fullContent2 }
+                  ? { ...m, content: fullResponse }
                   : m
               ));
             }
@@ -407,21 +423,15 @@ export default function AppChat() {
         }
       }
 
-      // Parse for artifacts after streaming is complete
-      const artifact = parseArtifact(fullContent2);
+      // Extract artifact if present
+      const artifact = extractArtifact(fullResponse);
       if (artifact) {
-        setMessages(prev => prev.map(m => 
-          m.id === assistantMessageId 
-            ? { ...m, artifact }
-            : m
-        ));
         setCurrentArtifact(artifact);
         setShowArtifactPanel(true);
       }
 
     } catch (error) {
       console.error('Chat error:', error);
-      // Remove the empty assistant message on error
       setMessages(prev => prev.filter(m => m.id !== assistantMessageId));
       toast({
         title: "Error",
@@ -446,28 +456,6 @@ export default function AppChat() {
     navigate('/app/chat');
   };
 
-  const handleViewArtifact = (artifact: ArtifactData) => {
-    setCurrentArtifact(artifact);
-    setShowArtifactPanel(true);
-  };
-
-  const parseArtifact = (content: string): ArtifactData | null => {
-    // Check for architecture/plan markers
-    const diagramMatch = content.match(/```mermaid\n([\s\S]*?)```/);
-    const planMatch = content.match(/## Architecture Plan/i) || content.match(/# Architecture/i);
-    
-    if (diagramMatch || planMatch) {
-      return {
-        type: diagramMatch ? 'diagram' : 'plan',
-        title: diagramMatch ? 'Architecture Diagram' : 'Architecture Plan',
-        content: content,
-        sections: []
-      };
-    }
-    
-    return null;
-  };
-
   const hasMessages = messages.length > 1 || (messages.length === 1 && messages[0].id !== 'welcome');
 
   return (
@@ -475,11 +463,11 @@ export default function AppChat() {
       {/* Main Chat Area */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 transition-all duration-300",
-        showArtifactPanel && "lg:mr-[400px]"
+        showArtifactPanel && "lg:mr-[450px]"
       )}>
-        {/* Chat Header - Claude/ChatGPT style */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-background/50 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-background/80 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
@@ -493,9 +481,13 @@ export default function AppChat() {
               </TooltipTrigger>
               <TooltipContent>New Chat</TooltipContent>
             </Tooltip>
-            <span className="text-sm font-medium text-muted-foreground">
-              {conversationId ? 'Conversation' : 'New Chat'}
-            </span>
+            
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {conversationId ? 'Conversation' : 'New Chat'}
+              </span>
+            </div>
           </div>
           
           <div className="flex items-center gap-2">
@@ -528,7 +520,7 @@ export default function AppChat() {
                     variant="ghost" 
                     size="icon" 
                     onClick={() => setShowArtifactPanel(!showArtifactPanel)}
-                    className="h-8 w-8"
+                    className={cn("h-8 w-8", showArtifactPanel && "bg-primary/10 text-primary")}
                   >
                     {showArtifactPanel ? (
                       <PanelRightClose className="h-4 w-4" />
@@ -538,31 +530,32 @@ export default function AppChat() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {showArtifactPanel ? 'Close panel' : 'Open panel'}
+                  {showArtifactPanel ? 'Close artifact' : 'View artifact'}
                 </TooltipContent>
               </Tooltip>
             )}
           </div>
         </div>
 
-        {/* Messages Area */}
+        {/* Messages */}
         <div 
           ref={messagesContainerRef}
           className="flex-1 overflow-y-auto"
         >
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+          <div className="max-w-3xl mx-auto">
             {messages.map((message) => (
-              <ChatMessageBubble
+              <ChatMessage
                 key={message.id}
-                message={message}
-                onViewArtifact={message.artifact ? () => handleViewArtifact(message.artifact!) : undefined}
+                role={message.role}
+                content={message.content}
+                timestamp={message.timestamp}
               />
             ))}
             
             {isLoading && messages[messages.length - 1]?.content === '' && (
-              <div className="flex items-center gap-3 px-4">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-3 px-6 py-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex gap-1">
@@ -574,11 +567,11 @@ export default function AppChat() {
               </div>
             )}
             
-            <div ref={messagesEndRef} />
+            <div ref={messagesEndRef} className="h-4" />
           </div>
         </div>
 
-        {/* Scroll to bottom button */}
+        {/* Scroll button */}
         {showScrollButton && (
           <Button
             variant="secondary"
@@ -590,21 +583,17 @@ export default function AppChat() {
           </Button>
         )}
 
-        {/* Input Area - ChatGPT style at bottom */}
-        <div className="border-t border-border/50 bg-background/80 backdrop-blur-sm">
-          <div className="max-w-3xl mx-auto">
-            <ChatInputArea
-              onSend={sendMessage}
-              isLoading={isLoading}
-              placeholder="Ask me about your architecture..."
-            />
-          </div>
-        </div>
+        {/* Input */}
+        <ChatInputArea
+          onSend={sendMessage}
+          isLoading={isLoading}
+          placeholder="Describe what you want to build..."
+        />
       </div>
 
       {/* Artifact Panel */}
       {showArtifactPanel && currentArtifact && (
-        <div className="hidden lg:block fixed right-0 top-14 bottom-0 w-[400px] border-l border-border bg-card/50 backdrop-blur-sm overflow-hidden">
+        <div className="hidden lg:block fixed right-0 top-14 bottom-0 w-[450px] border-l border-border bg-card overflow-hidden">
           <ArtifactPanel 
             artifact={currentArtifact}
             onClose={() => setShowArtifactPanel(false)}
