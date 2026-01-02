@@ -5,29 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   Cloud, 
-  Zap, 
   ArrowRight, 
   Globe, 
-  Smartphone, 
   Database, 
   Layers, 
-  Sparkles, 
   Layout, 
-  BarChart3, 
-  Shield, 
   LogIn, 
   MessageSquare, 
-  ListChecks, 
   Menu, 
   X,
   CheckCircle2,
   Building2,
   Users,
   FileCode2,
-  Network,
   GitBranch,
-  Box,
-  Workflow,
   Play,
   Star,
   Clock,
@@ -41,12 +32,12 @@ import {
   ShoppingCart,
   TrendingUp,
   FileSpreadsheet,
-  FileText,
-  GitCompare,
-  Timer,
-  Cpu,
   XCircle,
-  Check
+  Check,
+  Sparkles,
+  BarChart3,
+  Shield,
+  Cpu
 } from 'lucide-react';
 
 const TRUSTED_LOGOS = [
@@ -291,17 +282,11 @@ export default function Landing() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-12 w-full sm:w-auto animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
               {user ? (
-                <>
-                  <Button onClick={() => navigate('/app/chat')} variant="hero" size="lg" className="gap-2 w-full sm:w-auto shadow-xl shadow-primary/25 text-base px-8">
-                    <MessageSquare className="w-5 h-5" />
-                    Chat with AI Architect
-                    <ArrowRight className="w-5 h-5" />
-                  </Button>
-                  <Button onClick={() => navigate('/app/wizard')} variant="outline" size="lg" className="gap-2 border-border/50 w-full sm:w-auto text-base">
-                    <ListChecks className="w-5 h-5" />
-                    Use Wizard
-                  </Button>
-                </>
+                <Button onClick={() => navigate('/app/chat')} variant="hero" size="lg" className="gap-2 w-full sm:w-auto shadow-xl shadow-primary/25 text-base px-8">
+                  <MessageSquare className="w-5 h-5" />
+                  Chat with AI Architect
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
               ) : (
                 <>
                   <Button onClick={() => navigate('/sign-up')} variant="hero" size="lg" className="gap-2 w-full sm:w-auto shadow-xl shadow-primary/25 text-base px-8">

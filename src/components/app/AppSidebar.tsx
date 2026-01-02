@@ -40,7 +40,6 @@ interface Conversation {
 }
 
 const mainNavItems = [
-  { title: "Dashboard", url: "/app", icon: LayoutDashboard },
   { title: "New Chat", url: "/app/chat", icon: MessageSquare },
 ];
 const resourceItems = [
