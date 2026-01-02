@@ -15,6 +15,8 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 import Guide from "./pages/Guide";
+import Pricing from "./pages/Pricing";
+import Templates from "./pages/Templates";
 import NotFound from "./pages/NotFound";
 
 // App layout and pages
@@ -46,6 +48,8 @@ const App = () => (
               <Route path="/contact" element={<Contact />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/guide" element={<Guide />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/templates" element={<Templates />} />
 
               {/* App routes (authenticated) */}
               <Route path="/app" element={

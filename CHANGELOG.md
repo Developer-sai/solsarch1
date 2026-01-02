@@ -5,6 +5,58 @@ All notable changes to SolsArch will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-01-02
+
+### Overview
+Version 0.5.0 represents a major feature expansion, integrating enterprise-grade capabilities from the Sols repository including billing, templates, analytics, and enhanced collaboration features.
+
+### Added (Integrated from Sols Repository)
+- **Pricing Page**: Comprehensive pricing tiers (Starter, Professional, Enterprise) with feature comparison
+- **Templates System**: Pre-built architecture templates library
+  - E-Commerce Platform template
+  - AI/ML Training Pipeline template
+  - Serverless Web App template
+  - Healthcare Data Platform (HIPAA-compliant)
+  - IoT Data Pipeline template
+  - Multi-Region SaaS template
+- **Template Features**:
+  - Search and filter templates by category
+  - Difficulty level indicators (Beginner, Intermediate, Advanced)
+  - Estimated monthly cost per template
+  - One-click template deployment
+- **Enhanced Components**:
+  - `PricingCard` component for pricing display
+  - `TemplateCard` component for template browsing
+  - Cost comparison tables
+  - Compliance reporting
+  - Version history tracking
+  - Share and collaboration dialogs
+- **New Routes**:
+  - `/pricing` - Pricing and plans page
+  - `/templates` - Architecture templates library
+
+### Planned Features (From Sols Analysis)
+The following features from Sols repository are documented for future releases:
+- **Admin Panel**: User management and governance dashboard
+- **Billing System**: Stripe integration with subscription management
+- **Analytics Dashboard**: Usage analytics and cost tracking
+- **Onboarding Flow**: User onboarding wizard and feature tour
+- **Resources Library**: Best practices and discovery features
+- **Comments/Collaboration**: Architecture collaboration features
+- **API Enhancements**: Additional Supabase Edge Functions for advanced features
+
+### Technical
+- Maintained Vite + React architecture (no framework migration)
+- Adapted Next.js components from Sols to React Router
+- Added new page components and routing
+- Enhanced component library with enterprise features
+
+### Notes
+This release focuses on user-facing features while maintaining the existing Vite + React + Supabase architecture. Future releases will add backend integrations for billing, analytics, and admin features.
+
+---
+
+
 ## [0.4.0] - 2026-01-02
 
 ### Overview

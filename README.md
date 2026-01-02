@@ -1,6 +1,6 @@
 # SolsArch - AI Solutions Architect Platform
 
-![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)
 ![Status](https://img.shields.io/badge/status-production-green.svg)
 
 **AI-powered cloud architecture design platform with multi-cloud cost intelligence**
@@ -31,6 +31,8 @@ SolsArch is an enterprise-grade platform that helps architects, developers, and 
 - **Multi-Region Design**: Global architecture patterns with latency optimization
 - **Version History**: Track and compare architecture iterations
 - **Team Collaboration**: Organization-based workspaces (coming soon)
+- **Templates Library**: Pre-built architecture templates for common use cases ✨ NEW in v0.5
+- **Pricing Plans**: Flexible pricing tiers for individuals and enterprises ✨ NEW in v0.5
 
 ## 🛠️ Technology Stack
 
