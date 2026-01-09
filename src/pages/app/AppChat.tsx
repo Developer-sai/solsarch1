@@ -1,15 +1,17 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Bot, ArrowDown, Save, Loader2, PanelRightOpen, PanelRightClose, Plus, Sparkles } from 'lucide-react';
+import { Bot, ArrowDown, Save, Loader2, PanelRightOpen, PanelRightClose, Plus, Sparkles, FolderTree, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { ChatMessage } from '@/components/chat/ChatMessage';
-import { ChatInputArea } from '@/components/chat/ChatInputArea';
+import { EnhancedChatInput } from '@/components/chat/EnhancedChatInput';
 import { ArtifactPanel } from '@/components/chat/ArtifactPanel';
+import { CodebasePanel } from '@/components/chat/CodebasePanel';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useCodebaseContext } from '@/hooks/useCodebaseContext';
 
 interface Message {
   id: string;
@@ -28,7 +30,7 @@ const WELCOME_MESSAGE = `Hey! I'm **SolsArch**, your AI Solutions Architect.
 
 I can help you design and architect any software system — from a simple web app to complex distributed systems across multiple clouds.
 
-**Some things I can help with:**
+**What I can do:**
 
 - 🏗️ **System Architecture** — Design scalable, production-ready systems
 - ☁️ **Cloud Strategy** — Compare AWS, Azure, GCP, and OCI options with cost estimates
@@ -36,7 +38,15 @@ I can help you design and architect any software system — from a simple web ap
 - 📊 **Data Architecture** — Choose the right databases and data flow patterns
 - 🤖 **AI/ML Systems** — Design LLM integrations, RAG pipelines, and ML infrastructure
 
-**Just describe what you want to build** — be as detailed or as vague as you like. I'll ask clarifying questions and generate architecture diagrams, implementation plans, and tech stack recommendations.`;
+**🆕 Codebase Analysis:**
+
+Click the **folder icon** to add a GitHub repository or upload code files. I can:
+- Analyze your existing codebase structure
+- Suggest architectural improvements
+- Generate migration plans
+- Recommend modernization strategies
+
+**Just describe what you want to build** or paste a GitHub URL — I'll analyze and generate architecture diagrams, implementation plans, and tech stack recommendations.`;
 
 export default function AppChat() {
   const { conversationId: urlConversationId } = useParams();
@@ -58,9 +68,22 @@ export default function AppChat() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [currentArtifact, setCurrentArtifact] = useState<ArtifactData | null>(null);
   const [showArtifactPanel, setShowArtifactPanel] = useState(false);
+  const [showCodebasePanel, setShowCodebasePanel] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Codebase context
+  const {
+    context: codebaseContext,
+    fetchGitHubRepo,
+    addFilesFromUpload,
+    toggleFileSelection,
+    selectAllFiles,
+    clearSelection,
+    clearContext,
+    getSelectedFilesContent,
+  } = useCodebaseContext();
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -287,6 +310,7 @@ export default function AppChat() {
   const sendMessage = async (content: string, files?: File[]) => {
     let fullContent = content;
     
+    // Add uploaded files as context
     if (files && files.length > 0) {
       for (const file of files) {
         try {
@@ -296,6 +320,20 @@ export default function AppChat() {
           console.error('Failed to read file:', err);
         }
       }
+    }
+
+    // Add selected codebase files as context
+    if (codebaseContext.selectedFiles.length > 0) {
+      const codeContent = await getSelectedFilesContent();
+      if (codeContent) {
+        fullContent = `[CODEBASE CONTEXT]\n${codeContent}\n\n[USER MESSAGE]\n${fullContent}`;
+      }
+    }
+
+    // Add repo info as context if available
+    if (codebaseContext.repo && codebaseContext.selectedFiles.length > 0) {
+      const repoInfo = `\n\n[REPOSITORY INFO]\nName: ${codebaseContext.repo.name}\nOwner: ${codebaseContext.repo.owner}\nSource: ${codebaseContext.repo.source}\nFiles in context: ${codebaseContext.selectedFiles.length}`;
+      fullContent = repoInfo + '\n' + fullContent;
     }
 
     const userMessage: Message = {
@@ -453,13 +491,35 @@ export default function AppChat() {
     }]);
     setCurrentArtifact(null);
     setShowArtifactPanel(false);
+    clearContext();
     navigate('/app/chat');
   };
 
   const hasMessages = messages.length > 1 || (messages.length === 1 && messages[0].id !== 'welcome');
+  const hasCodebaseContext = codebaseContext.repo !== null || codebaseContext.files.length > 0;
 
   return (
     <div className="h-full flex">
+      {/* Codebase Panel (Left) */}
+      {showCodebasePanel && (
+        <div className="hidden md:block w-[320px] border-r border-border bg-card flex-shrink-0">
+          <CodebasePanel
+            repo={codebaseContext.repo}
+            files={codebaseContext.files}
+            selectedFiles={codebaseContext.selectedFiles}
+            isLoading={codebaseContext.isLoading}
+            error={codebaseContext.error}
+            onFetchRepo={fetchGitHubRepo}
+            onUploadFiles={addFilesFromUpload}
+            onToggleFile={toggleFileSelection}
+            onSelectAll={selectAllFiles}
+            onClearSelection={clearSelection}
+            onClear={clearContext}
+            onClose={() => setShowCodebasePanel(false)}
+          />
+        </div>
+      )}
+
       {/* Main Chat Area */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 transition-all duration-300",
@@ -482,11 +542,32 @@ export default function AppChat() {
               <TooltipContent>New Chat</TooltipContent>
             </Tooltip>
             
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setShowCodebasePanel(!showCodebasePanel)}
+                  className={cn("h-8 w-8 hidden md:flex", showCodebasePanel && "bg-primary/10 text-primary")}
+                >
+                  <FolderTree className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {showCodebasePanel ? 'Hide codebase' : 'Show codebase context'}
+              </TooltipContent>
+            </Tooltip>
+            
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">
                 {conversationId ? 'Conversation' : 'New Chat'}
               </span>
+              {hasCodebaseContext && (
+                <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                  {codebaseContext.selectedFiles.length} files in context
+                </span>
+              )}
             </div>
           </div>
           
@@ -584,10 +665,14 @@ export default function AppChat() {
         )}
 
         {/* Input */}
-        <ChatInputArea
+        <EnhancedChatInput
           onSend={sendMessage}
           isLoading={isLoading}
-          placeholder="Describe what you want to build..."
+          codebaseFiles={codebaseContext.files}
+          selectedCodeFiles={codebaseContext.selectedFiles}
+          hasCodebaseContext={hasCodebaseContext}
+          onOpenCodebase={() => setShowCodebasePanel(true)}
+          onToggleCodeFile={toggleFileSelection}
         />
       </div>
 
