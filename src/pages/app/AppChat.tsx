@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Bot, ArrowDown, Save, Loader2, PanelRightOpen, PanelRightClose, Plus, Sparkles, FolderTree, X } from 'lucide-react';
+import { 
+  Bot, ArrowDown, Save, Loader2, PanelRightOpen, PanelRightClose, 
+  Plus, Sparkles, FolderTree, Zap, BarChart3, Shield, FileCode2,
+  ChevronDown
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -10,8 +14,16 @@ import { ChatMessage } from '@/components/chat/ChatMessage';
 import { EnhancedChatInput } from '@/components/chat/EnhancedChatInput';
 import { ArtifactPanel } from '@/components/chat/ArtifactPanel';
 import { CodebasePanel } from '@/components/chat/CodebasePanel';
+import { AgentStatusPanel } from '@/components/app/AgentStatusPanel';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCodebaseContext } from '@/hooks/useCodebaseContext';
+import { useAgentWorkflow } from '@/hooks/useAgentWorkflow';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Message {
   id: string;
@@ -21,32 +33,26 @@ interface Message {
 }
 
 export interface ArtifactData {
-  type: 'architecture' | 'diagram' | 'plan' | 'code';
+  type: 'architecture' | 'diagram' | 'plan' | 'code' | 'cost' | 'security';
   title: string;
   content: string;
 }
 
-const WELCOME_MESSAGE = `Hey! I'm **SolsArch**, your AI Solutions Architect.
+const WELCOME_MESSAGE = `Hey! I'm **SolsArch 2.0**, your AI-native Solutions Architecture platform.
 
-I can help you design and architect any software system — from a simple web app to complex distributed systems across multiple clouds.
+I'm powered by **autonomous AI agents** that work together to design, analyze, and deploy your systems:
 
-**What I can do:**
+🎯 **Master Orchestrator** — Coordinates all agents and workflows
+🏗️ **Design Agent** — Creates architecture diagrams and patterns  
+💰 **Cost Agent** — Real-time multi-cloud pricing (AWS, Azure, GCP, OCI)
+🔐 **Security Agent** — Compliance validation and threat modeling
+📜 **IaC Agent** — Generates Terraform, CloudFormation, Pulumi code
 
-- 🏗️ **System Architecture** — Design scalable, production-ready systems
-- ☁️ **Cloud Strategy** — Compare AWS, Azure, GCP, and OCI options with cost estimates
-- 🔐 **Security & Auth** — Implement OAuth, RBAC, and compliance requirements
-- 📊 **Data Architecture** — Choose the right databases and data flow patterns
-- 🤖 **AI/ML Systems** — Design LLM integrations, RAG pipelines, and ML infrastructure
+**Quick Actions:**
+- Click ⚡ **Agent Mode** to run specialized workflows
+- Click 📁 **Codebase** to analyze GitHub repos or uploaded files
 
-**🆕 Codebase Analysis:**
-
-Click the **folder icon** to add a GitHub repository or upload code files. I can:
-- Analyze your existing codebase structure
-- Suggest architectural improvements
-- Generate migration plans
-- Recommend modernization strategies
-
-**Just describe what you want to build** or paste a GitHub URL — I'll analyze and generate architecture diagrams, implementation plans, and tech stack recommendations.`;
+**Just describe what you want to build** — I'll activate the right agents and deliver comprehensive architecture with costs, security analysis, and deployable infrastructure code.`;
 
 export default function AppChat() {
   const { conversationId: urlConversationId } = useParams();
@@ -69,6 +75,7 @@ export default function AppChat() {
   const [currentArtifact, setCurrentArtifact] = useState<ArtifactData | null>(null);
   const [showArtifactPanel, setShowArtifactPanel] = useState(false);
   const [showCodebasePanel, setShowCodebasePanel] = useState(false);
+  const [showAgentPanel, setShowAgentPanel] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -84,6 +91,9 @@ export default function AppChat() {
     clearContext,
     getSelectedFilesContent,
   } = useCodebaseContext();
+
+  // Agent workflow
+  const { workflow, isRunning, currentAgent, startWorkflow, cancelWorkflow } = useAgentWorkflow();
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -285,12 +295,40 @@ export default function AppChat() {
       };
     }
 
+    // Check for cost analysis
+    if (content.includes('Cost Analysis') || (content.includes('AWS') && content.includes('Azure') && content.includes('/mo'))) {
+      return {
+        type: 'cost',
+        title: 'Multi-Cloud Cost Analysis',
+        content: content
+      };
+    }
+
+    // Check for security analysis
+    if (content.includes('Security') && (content.includes('SOC2') || content.includes('HIPAA') || content.includes('Compliance'))) {
+      return {
+        type: 'security',
+        title: 'Security & Compliance Analysis',
+        content: content
+      };
+    }
+
     // Check for implementation plans
     if (content.includes('## Implementation Plan') || content.includes('### Phase 1')) {
       return {
         type: 'plan',
         title: 'Implementation Plan',
         content: content
+      };
+    }
+
+    // Check for Terraform/IaC code
+    if (content.includes('```hcl') || content.includes('```terraform') || content.includes('resource "')) {
+      const codeMatch = content.match(/```(?:hcl|terraform)\n([\s\S]*?)```/);
+      return {
+        type: 'code',
+        title: 'Infrastructure Code',
+        content: codeMatch ? codeMatch[1].trim() : content
       };
     }
 
@@ -307,7 +345,25 @@ export default function AppChat() {
     return null;
   };
 
-  const sendMessage = async (content: string, files?: File[]) => {
+  const runAgentWorkflow = async (agentMode: 'architecture' | 'cost' | 'security' | 'iac') => {
+    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+    if (!lastUserMessage) {
+      toast({
+        title: "No context",
+        description: "Please describe what you want to build first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setShowAgentPanel(true);
+    startWorkflow(agentMode, lastUserMessage.content);
+
+    // Also send to AI with agent mode
+    await sendMessage(`[AGENT: ${agentMode.toUpperCase()}] ${lastUserMessage.content}`, undefined, agentMode);
+  };
+
+  const sendMessage = async (content: string, files?: File[], agentMode?: 'architecture' | 'cost' | 'security' | 'iac') => {
     let fullContent = content;
     
     // Add uploaded files as context
@@ -382,7 +438,8 @@ export default function AppChat() {
               content: m.content
             })),
             mode: 'chat',
-            stream: true
+            stream: true,
+            agentMode
           }),
         }
       );
@@ -491,6 +548,7 @@ export default function AppChat() {
     }]);
     setCurrentArtifact(null);
     setShowArtifactPanel(false);
+    setShowAgentPanel(false);
     clearContext();
     navigate('/app/chat');
   };
@@ -523,7 +581,7 @@ export default function AppChat() {
       {/* Main Chat Area */}
       <div className={cn(
         "flex-1 flex flex-col min-w-0 transition-all duration-300",
-        showArtifactPanel && "lg:mr-[450px]"
+        showArtifactPanel && "lg:mr-[500px]"
       )}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-background/80 backdrop-blur-sm">
@@ -554,9 +612,45 @@ export default function AppChat() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {showCodebasePanel ? 'Hide codebase' : 'Show codebase context'}
+                {showCodebasePanel ? 'Hide codebase' : 'Analyze codebase'}
               </TooltipContent>
             </Tooltip>
+            
+            {/* Agent Mode Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className={cn(
+                    "gap-2 h-8",
+                    isRunning && "bg-primary/10 text-primary"
+                  )}
+                >
+                  <Zap className={cn("h-4 w-4", isRunning && "animate-pulse")} />
+                  <span className="hidden sm:inline">Agent Mode</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => runAgentWorkflow('architecture')}>
+                  <Sparkles className="h-4 w-4 mr-2 text-purple-400" />
+                  Full Architecture
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => runAgentWorkflow('cost')}>
+                  <BarChart3 className="h-4 w-4 mr-2 text-green-400" />
+                  Cost Analysis
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => runAgentWorkflow('security')}>
+                  <Shield className="h-4 w-4 mr-2 text-red-400" />
+                  Security Review
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => runAgentWorkflow('iac')}>
+                  <FileCode2 className="h-4 w-4 mr-2 text-orange-400" />
+                  Generate IaC
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -565,13 +659,31 @@ export default function AppChat() {
               </span>
               {hasCodebaseContext && (
                 <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-                  {codebaseContext.selectedFiles.length} files in context
+                  {codebaseContext.selectedFiles.length} files
                 </span>
               )}
             </div>
           </div>
           
           <div className="flex items-center gap-2">
+            {workflow && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setShowAgentPanel(!showAgentPanel)}
+                    className={cn("h-8 w-8", showAgentPanel && "bg-primary/10 text-primary")}
+                  >
+                    <Zap className={cn("h-4 w-4", isRunning && "animate-pulse text-primary")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {showAgentPanel ? 'Hide agents' : 'View agent status'}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
             {hasMessages && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -618,6 +730,16 @@ export default function AppChat() {
           </div>
         </div>
 
+        {/* Agent Status (Floating) */}
+        {showAgentPanel && workflow && (
+          <div className="absolute top-16 right-4 z-20 w-80">
+            <AgentStatusPanel 
+              workflow={workflow}
+              onToggleMinimize={() => setShowAgentPanel(false)}
+            />
+          </div>
+        )}
+
         {/* Messages */}
         <div 
           ref={messagesContainerRef}
@@ -635,10 +757,20 @@ export default function AppChat() {
             
             {isLoading && messages[messages.length - 1]?.content === '' && (
               <div className="flex items-center gap-3 px-6 py-4">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                  {isRunning && currentAgent && (
+                    <span className="text-xs text-primary">
+                      {currentAgent === 'orchestrator' && '🎯 Orchestrating...'}
+                      {currentAgent === 'requirements' && '📋 Analyzing...'}
+                      {currentAgent === 'design' && '🏗️ Designing...'}
+                      {currentAgent === 'cost' && '💰 Calculating...'}
+                      {currentAgent === 'security' && '🔐 Validating...'}
+                      {currentAgent === 'iac' && '📜 Generating...'}
+                    </span>
+                  )}
                   <div className="flex gap-1">
                     <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <span className="w-2 h-2 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -678,7 +810,7 @@ export default function AppChat() {
 
       {/* Artifact Panel */}
       {showArtifactPanel && currentArtifact && (
-        <div className="hidden lg:block fixed right-0 top-14 bottom-0 w-[450px] border-l border-border bg-card overflow-hidden">
+        <div className="hidden lg:block fixed right-0 top-14 bottom-0 w-[500px] border-l border-border bg-card overflow-hidden">
           <ArtifactPanel 
             artifact={currentArtifact}
             onClose={() => setShowArtifactPanel(false)}
